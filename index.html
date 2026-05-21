@@ -1,0 +1,767 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--color-background-tertiary,#f5f5f0);color:var(--color-text-primary,#1a1a1a);font-size:15px;overflow-x:hidden;touch-action:pan-y}
+.app{max-width:480px;margin:0 auto;padding-bottom:80px}
+.topbar{background:var(--color-background-primary,#fff);border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.12));padding:12px 16px;position:sticky;top:0;z-index:50}
+.topbar-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.topbar-title{font-size:16px;font-weight:500}
+.payday-btn{color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;font-weight:500}
+.month-nav{display:flex;align-items:center;gap:6px}
+.month-nav button{background:none;border:0.5px solid var(--color-border-secondary,rgba(0,0,0,0.2));border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;color:var(--color-text-primary)}
+.month-label{font-size:13px;font-weight:500;min-width:90px;text-align:center;color:var(--color-text-secondary)}
+.today-btn{font-size:11px;padding:3px 8px;color:#534AB7;border-color:#AFA9EC}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--color-background-primary,#fff);border-top:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.12));display:flex;z-index:50}
+.nav-item{flex:1;padding:10px 4px 8px;text-align:center;cursor:pointer;border:none;background:none;color:var(--color-text-secondary,#888);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav-item.active{color:#534AB7}
+.nav-icon{font-size:17px;line-height:1}
+.page{display:none}.page.active{display:block}
+.card{background:var(--color-background-primary,#fff);border-radius:12px;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.1));padding:16px;margin:10px 14px 0}
+.card-title{font-size:13px;color:var(--color-text-secondary,#666);margin-bottom:10px}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px 0}
+.metric{background:var(--color-background-secondary,#f8f8f5);border-radius:8px;padding:11px 12px}
+.metric-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:3px;display:flex;align-items:center;gap:4px}
+.metric-val{font-size:20px;font-weight:500}
+.metric-sub{font-size:11px;color:var(--color-text-secondary);margin-top:1px}
+.cg{color:#0F6E56}.cr{color:#A32D2D}.cb{color:#185FA5}.cp{color:#534AB7}
+.est-tag{font-size:10px;background:#FFF3CD;color:#856404;padding:1px 5px;border-radius:4px}
+.act-tag{font-size:10px;background:#D1FAE5;color:#065F46;padding:1px 5px;border-radius:4px}
+.prog-row{margin-bottom:12px}.prog-row:last-child{margin-bottom:0}
+.prog-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.prog-name{font-size:14px}.prog-amounts{font-size:12px;color:var(--color-text-secondary)}
+.prog-bar{height:5px;background:var(--color-background-secondary,#eee);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width 0.3s}
+.fok{background:#534AB7}.fwarn{background:#BA7517}.fover{background:#A32D2D}
+.sec-hdr{padding:18px 14px 4px;font-size:12px;color:var(--color-text-secondary);font-weight:500;letter-spacing:0.4px;text-transform:uppercase}
+.log-item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.08))}
+.log-item:last-child{border-bottom:none}
+.log-left{flex:1;min-width:0}
+.log-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-meta{font-size:11px;color:var(--color-text-secondary);margin-top:1px}
+.log-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.log-amt{font-size:14px;font-weight:500}
+.log-act{background:none;border:none;color:var(--color-text-secondary);font-size:15px;cursor:pointer;padding:2px 4px;opacity:0.5}
+.badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle}
+.bc{background:#EEEDFE;color:#3C3489}.bj{background:#E1F5EE;color:#085041}.bs{background:#E6F1FB;color:#0C447C}
+.pay-badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.fab{position:fixed;bottom:76px;right:20px;background:#534AB7;color:#fff;border:none;width:52px;height:52px;border-radius:50%;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:40;box-shadow:0 2px 10px rgba(83,74,183,0.4)}
+.income-card{background:var(--color-background-primary,#fff);border-radius:12px;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.1));padding:16px;margin:10px 14px 0}
+.income-member-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.income-member-row:last-child{border-bottom:none}
+.income-member-name{font-size:14px;font-weight:500;margin-bottom:4px}
+.income-items{font-size:12px;color:var(--color-text-secondary);line-height:1.7}
+.income-total{font-size:17px;font-weight:500;color:#0F6E56}
+/* investment */
+.inv-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.inv-metric{background:var(--color-background-secondary,#f8f8f5);border-radius:8px;padding:10px 12px}
+.inv-metric-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:3px}
+.inv-metric-val{font-size:17px;font-weight:500}
+.inv-stock{border-bottom:0.5px solid var(--color-border-tertiary);padding:12px 0}
+.inv-stock:last-child{border-bottom:none}
+.inv-stock-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.inv-stock-name{font-size:15px;font-weight:500}
+.inv-stock-price{font-size:13px;color:var(--color-text-secondary)}
+.inv-batch{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-top:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.06))}
+.inv-batch-left{color:var(--color-text-secondary)}
+.inv-pnl-pos{color:#0F6E56;font-weight:500}
+.inv-pnl-neg{color:#A32D2D;font-weight:500}
+.inv-total-row{display:flex;justify-content:space-between;padding:8px 0 2px;font-size:13px;font-weight:500}
+.inv-refresh{font-size:11px;color:var(--color-text-secondary);margin-top:8px;display:flex;align-items:center;justify-content:space-between}
+.refresh-btn{font-size:11px;color:#534AB7;background:none;border:none;cursor:pointer;padding:2px 6px}
+/* savings */
+.sav-card{background:var(--color-background-primary,#fff);border-radius:12px;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.1));padding:16px;margin:0 14px 10px}
+.sav-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.sav-name{font-size:15px;font-weight:500}
+.sav-tgt{font-size:12px;color:var(--color-text-secondary)}
+.sav-total{font-size:22px;font-weight:500;color:#185FA5}
+.sav-monthly{font-size:12px;color:var(--color-text-secondary);margin:2px 0 10px}
+.dep-btn{background:#E6F1FB;color:#185FA5;border:none;padding:7px 16px;border-radius:16px;font-size:13px;cursor:pointer;font-weight:500}
+.sav-hist-btn{background:none;border:none;font-size:12px;color:var(--color-text-secondary);cursor:pointer;padding:4px 0;margin-top:6px;display:block}
+.sav-hist{display:none;margin-top:8px;border-top:0.5px solid var(--color-border-tertiary);padding-top:8px}
+.sav-hist.open{display:block}
+.sav-hist-item{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.sav-hist-item:last-child{border-bottom:none}
+/* analysis */
+.range-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.range-chip{background:none;border:0.5px solid var(--color-border-secondary);border-radius:16px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--color-text-secondary)}
+.range-chip.active{background:#534AB7;color:#fff;border-color:#534AB7}
+.date-inputs{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+.date-inputs input{flex:1;padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.apply-btn{background:#534AB7;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer}
+.month-bar-wrap{display:flex;align-items:flex-end;gap:4px;height:100px}
+.mbar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.mbar{width:100%;border-radius:3px 3px 0 0;min-height:2px}
+.mbar-lbl{font-size:10px;color:var(--color-text-secondary);margin-top:3px}
+.legend{display:flex;gap:12px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-text-secondary)}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+/* settings */
+.sset{padding:0 14px}
+.sitem{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.sitem:last-child{border-bottom:none}
+.slabel{font-size:14px}.ssub{font-size:12px;color:var(--color-text-secondary)}
+.sval{font-size:14px;color:var(--color-text-secondary)}
+.edit-btn{font-size:12px;color:#534AB7;background:none;border:none;cursor:pointer;padding:4px 8px}
+.toggle{position:relative;width:34px;height:19px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.tslider{position:absolute;inset:0;background:#ccc;border-radius:10px;cursor:pointer;transition:0.2s}
+.tslider:before{content:'';position:absolute;width:15px;height:15px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:0.2s}
+.toggle input:checked+.tslider{background:#534AB7}
+.toggle input:checked+.tslider:before{transform:translateX(15px)}
+.elist-item{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.elist-item:last-child{border-bottom:none}
+.elist-item input{flex:1;font-size:14px;padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:6px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.elist-item input.narrow{width:85px;flex:none}
+.del-btn{background:none;border:none;color:#A32D2D;font-size:17px;cursor:pointer;padding:2px 5px}
+.add-row-btn{font-size:13px;color:#534AB7;background:none;border:none;cursor:pointer;padding:8px 0}
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:flex-end;justify-content:center;overflow:hidden;touch-action:pan-y}
+.mbg.open{display:flex}
+.modal{background:var(--color-background-primary,#fff);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;touch-action:pan-y}
+.modal h3{font-size:16px;font-weight:500;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--color-text-secondary);margin-bottom:16px}
+.frow{margin-bottom:13px}
+.frow label{display:block;font-size:13px;color:var(--color-text-secondary);margin-bottom:4px}
+.frow input,.frow select{width:100%;padding:9px 12px;border:0.5px solid var(--color-border-secondary,rgba(0,0,0,0.2));border-radius:8px;font-size:15px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.factions{display:flex;gap:8px;margin-top:6px}
+.btn-p{flex:1;background:#534AB7;color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;cursor:pointer;font-weight:500}
+.btn-s{flex:1;background:none;color:var(--color-text-secondary);border:0.5px solid var(--color-border-secondary);padding:12px;border-radius:8px;font-size:15px;cursor:pointer}
+.pday-modal{background:#fff;border-radius:20px 20px 0 0;padding:22px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;touch-action:pan-y}
+.pday-member-block{background:#f8f8f5;border-radius:12px;padding:14px;margin-bottom:12px}
+.pday-member-title{font-size:15px;font-weight:500;margin-bottom:12px}
+.income-line{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.income-line:last-of-type{margin-bottom:4px}
+.income-line label{font-size:13px;color:#666;width:80px;flex-shrink:0}
+.income-line input{flex:1;padding:8px 10px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;font-size:15px;text-align:right;background:#fff;color:#1a1a1a}
+.pday-subtotal{text-align:right;font-size:13px;color:#666;margin-top:6px}
+.pday-subtotal span{font-size:16px;font-weight:500;color:#0F6E56}
+.pday-divider{border:none;border-top:0.5px solid rgba(0,0,0,0.1);margin:14px 0}
+.brow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid rgba(0,0,0,0.08);font-size:14px}
+.brow:last-child{border-bottom:none}
+.cele{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center}
+.cele.show{display:flex}
+.cele-box{background:#fff;border-radius:20px;padding:28px;text-align:center;max-width:290px;position:relative;z-index:1}
+.cele-emoji{font-size:44px;margin-bottom:10px}
+.cele-title{font-size:19px;font-weight:500;margin-bottom:5px}
+.cele-sub{font-size:13px;color:#666;margin-bottom:18px}
+canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:299}
+</style>
+
+<div class="app">
+<div class="topbar">
+  <div class="topbar-row1">
+    <div class="topbar-title" id="app-title">家庭財務中心</div>
+    <button class="payday-btn" id="payday-main-btn" onclick="openPayday()">💰 發薪了！</button>
+  </div>
+  <div class="month-nav">
+    <button onclick="shiftMonth(-1)">‹</button>
+    <span class="month-label" id="month-label">—</span>
+    <button onclick="shiftMonth(1)">›</button>
+    <button class="today-btn" onclick="goToday()">本月</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="pg-home" class="page active">
+  <div class="sum-grid">
+    <div class="metric">
+      <div class="metric-label">本月收入 <span id="income-status-tag"></span></div>
+      <div class="metric-val cg" id="m-income">-</div>
+      <div class="metric-sub" id="m-income-sub">-</div>
+    </div>
+    <div class="metric"><div class="metric-label">本月支出</div><div class="metric-val cr" id="m-expense">-</div><div class="metric-sub">三大類合計</div></div>
+    <div class="metric"><div class="metric-label">已存基金</div><div class="metric-val cb" id="m-saved">-</div><div class="metric-sub">本月累計</div></div>
+    <div class="metric"><div class="metric-label">剩餘可用</div><div class="metric-val" id="m-left" style="font-size:20px;font-weight:500">-</div><div class="metric-sub">收入－支出－存款</div></div>
+  </div>
+  <div class="income-card">
+    <div class="card-title" style="display:flex;justify-content:space-between"><span>本月收入明細</span><button class="edit-btn" style="padding:0" onclick="openPayday()">編輯</button></div>
+    <div id="income-detail-rows"></div>
+  </div>
+  <div class="card"><div class="card-title">固定支出</div><div id="fixed-prog"></div></div>
+  <div class="card"><div class="card-title">浮動支出</div><div id="var-prog"></div></div>
+  <div class="card"><div class="card-title">訂閱費</div><div id="sub-prog"></div></div>
+  <div class="sec-hdr">最近記帳</div>
+  <div class="card" style="padding:4px 14px"><div id="recent-log"></div></div>
+</div>
+
+<!-- LOG -->
+<div id="pg-log" class="page">
+  <div class="card" style="padding:10px 14px;margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+    <select id="log-filter" onchange="renderAllLog()" style="flex:1;min-width:110px;padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary)">
+      <option value="all">全部類型</option><option value="fixed">固定支出</option><option value="var">浮動支出</option><option value="sub">訂閱費</option><option value="income-extra">額外收入</option><option value="savings">基金存款</option>
+    </select>
+    <select id="log-member-filter" onchange="renderAllLog()" style="flex:1;min-width:90px;padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary)">
+      <option value="all">全部成員</option><option value="Cheryl">Cheryl</option><option value="Jo">Jo</option><option value="共同">共同</option>
+    </select>
+    <select id="log-pay-filter" onchange="renderAllLog()" style="flex:1;min-width:100px;padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:14px;background:var(--color-background-primary);color:var(--color-text-primary)">
+      <option value="all">全部付款</option>
+    </select>
+  </div>
+  <div class="sec-hdr" id="log-period-hdr">本月記帳</div>
+  <div class="card" style="padding:4px 14px"><div id="all-log"></div></div>
+</div>
+
+<!-- INVEST & SAVINGS -->
+<div id="pg-savings" class="page">
+  <!-- 股市投資 -->
+  <div class="sec-hdr">股市投資</div>
+  <div class="card">
+    <div id="inv-summary-grid" class="inv-summary"></div>
+    <div id="inv-refresh-row" class="inv-refresh">
+      <span id="inv-last-update">尚未取得報價</span>
+      <button class="refresh-btn" onclick="fetchPrices()">↻ 更新報價</button>
+    </div>
+  </div>
+  <!-- Cheryl stocks -->
+  <div class="card" style="padding:12px 16px">
+    <div class="card-title">👩🏻 Cheryl</div>
+    <div id="inv-cheryl"></div>
+  </div>
+  <!-- Jo stocks -->
+  <div class="card" style="padding:12px 16px">
+    <div class="card-title">👨🏻 Jo</div>
+    <div id="inv-jo"></div>
+  </div>
+
+  <!-- 儲蓄基金 -->
+  <div class="sec-hdr" style="margin-top:8px">儲蓄基金</div>
+  <div style="margin-top:10px" id="savings-cards"></div>
+</div>
+
+<!-- ANALYSIS -->
+<div id="pg-analysis" class="page">
+  <div class="sec-hdr">日期區間</div>
+  <div class="card">
+    <div class="range-bar">
+      <button class="range-chip" onclick="setQuick('week',this)">本週</button>
+      <button class="range-chip active" onclick="setQuick('month',this)">本月</button>
+      <button class="range-chip" onclick="setQuick('quarter',this)">本季</button>
+      <button class="range-chip" onclick="setQuick('year',this)">今年</button>
+      <button class="range-chip" onclick="setQuick('custom',this)">自訂</button>
+    </div>
+    <div id="custom-range" style="display:none">
+      <div class="date-inputs"><input type="date" id="an-start"><span style="color:#666;flex-shrink:0">至</span><input type="date" id="an-end"><button class="apply-btn" onclick="applyCustomRange()">套用</button></div>
+    </div>
+    <div style="font-size:12px;color:var(--color-text-secondary)" id="an-range-label"></div>
+  </div>
+  <div class="sec-hdr">支出趨勢</div>
+  <div class="card"><div style="height:120px"><div class="month-bar-wrap" id="trend-chart"></div></div><div class="legend" id="trend-legend"></div></div>
+  <div class="sec-hdr">支出佔比</div><div class="card" id="cat-breakdown"></div>
+  <div class="sec-hdr">付款方式統計</div><div class="card" id="pay-breakdown"></div>
+  <div class="sec-hdr">投資總覽</div>
+  <div class="card" id="an-invest"></div>
+  <div class="sec-hdr">年度累計</div><div class="card" id="yearly-summary"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="pg-settings" class="page">
+  <div class="sec-hdr">基本設定</div>
+  <div class="card sset" style="padding:0 14px">
+    <div class="sitem"><div><div class="slabel">月結起始日</div><div class="ssub">每月幾號開始計算</div></div><div style="display:flex;align-items:center;gap:6px"><span class="sval" id="cycle-day-val">10號</span><button class="edit-btn" onclick="editCycleDay()">修改</button></div></div>
+    <div class="sitem"><div><div class="slabel">帳本名稱</div><div class="ssub">顯示在頂部的標題</div></div><div style="display:flex;align-items:center;gap:6px"><span class="sval" id="app-title-val">家庭財務中心</span><button class="edit-btn" onclick="editAppTitle()">修改</button></div></div>
+    <div class="sitem" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div><div class="slabel">Finmind API Token</div><div class="ssub" id="token-status">未設定</div></div>
+      <div style="display:flex;gap:8px;width:100%">
+        <input id="token-input" type="password" placeholder="貼上 Token..." style="flex:1;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary)">
+        <button onclick="saveToken()" style="background:#534AB7;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;flex-shrink:0">儲存</button>
+      </div>
+      <button onclick="testApi()" style="width:100%;background:#E6F1FB;color:#185FA5;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:4px">🔍 測試 API 連線</button>
+      <div id="api-test-result" style="display:none;margin-top:8px;padding:10px;border-radius:8px;font-size:13px;line-height:1.6;word-break:break-all"></div>
+    </div>
+  </div>
+  <div class="sec-hdr">成員預設底薪</div>
+  <div class="card" style="padding:0 14px" id="income-settings"></div>
+  <div class="sec-hdr">付款方式</div><div class="card" id="pay-settings" style="padding:8px 14px"></div>
+  <div class="sec-hdr">固定支出</div><div class="card" id="fixed-settings" style="padding:8px 14px"></div>
+  <div class="sec-hdr">浮動支出</div><div class="card" id="var-settings" style="padding:8px 14px"></div>
+  <div class="sec-hdr">訂閱費</div><div class="card" id="sub-settings" style="padding:8px 14px"></div>
+  <div class="sec-hdr">儲蓄基金</div><div class="card" id="savings-settings" style="padding:8px 14px"></div>
+  <div style="height:20px"></div>
+</div>
+</div>
+
+<nav class="nav">
+  <button class="nav-item active" onclick="nav('home',this)"><span class="nav-icon">🏠</span>總覽</button>
+  <button class="nav-item" onclick="nav('log',this)"><span class="nav-icon">📝</span>記帳</button>
+  <button class="nav-item" onclick="nav('savings',this)"><span class="nav-icon">📈</span>投資&基金</button>
+  <button class="nav-item" onclick="nav('analysis',this)"><span class="nav-icon">📊</span>分析</button>
+  <button class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>設定</button>
+</nav>
+<button class="fab" onclick="openAdd()">+</button>
+
+<!-- ADD MODAL -->
+<div class="mbg" id="add-modal">
+<div class="modal">
+  <h3 id="add-modal-title">新增記帳</h3>
+  <div class="frow"><label>類型</label><select id="add-type" onchange="updateAddCat()"><option value="fixed">固定支出</option><option value="var">浮動支出</option><option value="sub">訂閱費</option><option value="income-extra">額外收入</option></select></div>
+  <div class="frow"><label>分類</label><select id="add-cat"></select></div>
+  <div class="frow"><label>金額（元）</label><input type="number" id="add-amount" placeholder="0"></div>
+  <div class="frow"><label>付款方式</label><select id="add-pay"></select></div>
+  <div class="frow"><label>備註（選填）</label><input type="text" id="add-note"></div>
+  <div class="frow"><label>成員</label><select id="add-member"><option value="Cheryl">Cheryl</option><option value="Jo">Jo</option><option value="共同">共同</option></select></div>
+  <div class="frow"><label>日期</label><input type="date" id="add-date"></div>
+  <div class="factions"><button class="btn-s" onclick="closeAdd()">取消</button><button class="btn-p" onclick="saveRecord()">儲存</button></div>
+</div>
+</div>
+
+<!-- DEPOSIT MODAL -->
+<div class="mbg" id="dep-modal">
+<div class="modal">
+  <h3 id="dep-title">存入基金</h3>
+  <div class="frow"><label>存入金額（元）</label><input type="number" id="dep-amount" placeholder="0"></div>
+  <div class="frow"><label>付款方式</label><select id="dep-pay"></select></div>
+  <div class="frow"><label>成員</label><select id="dep-member"><option value="Cheryl">Cheryl</option><option value="Jo">Jo</option><option value="共同">共同</option></select></div>
+  <div class="frow"><label>備註（選填）</label><input type="text" id="dep-note"></div>
+  <div class="factions"><button class="btn-s" onclick="closeDep()">取消</button><button class="btn-p" onclick="saveDep()">存入 🎊</button></div>
+</div>
+</div>
+
+<!-- PAYDAY MODAL -->
+<div class="mbg" id="payday-modal">
+<div class="pday-modal">
+  <h3 style="font-size:19px;margin-bottom:4px">💰 發薪了！</h3>
+  <div style="font-size:13px;color:#666;margin-bottom:16px" id="pday-period-label">確認本月實際收入</div>
+  <div class="pday-member-block">
+    <div class="pday-member-title">👩🏻 Cheryl</div>
+    <div class="income-line"><label>主業收入</label><input type="number" id="c-base" placeholder="0" oninput="updSubtotals()"></div>
+    <div class="income-line"><label>副業收入</label><input type="number" id="c-side" placeholder="0" oninput="updSubtotals()"></div>
+    <div class="pday-subtotal">本月小計：<span id="c-subtotal">NT$0</span></div>
+  </div>
+  <div class="pday-member-block">
+    <div class="pday-member-title">👨🏻 Jo</div>
+    <div class="income-line"><label>主業收入</label><input type="number" id="j-base" placeholder="0" oninput="updSubtotals()"></div>
+    <div class="income-line"><label>副業收入</label><input type="number" id="j-side" placeholder="0" oninput="updSubtotals()"></div>
+    <div class="pday-subtotal">本月小計：<span id="j-subtotal">NT$0</span></div>
+  </div>
+  <hr class="pday-divider">
+  <div id="pday-budget-rows"></div>
+  <div style="margin-top:14px;display:flex;gap:8px">
+    <button class="btn-s" onclick="closePayday()">取消</button>
+    <button class="btn-p" onclick="confirmPayday()">✅ 確認本月收入</button>
+  </div>
+</div>
+</div>
+
+<!-- CELEBRATION -->
+<div class="cele" id="cele" onclick="closeCele()">
+  <canvas id="fw"></canvas>
+  <div class="cele-box">
+    <div class="cele-emoji">🎉</div>
+    <div class="cele-title" id="cele-title">太棒了！</div>
+    <div class="cele-sub" id="cele-sub">已成功存入</div>
+    <button class="btn-p" onclick="closeCele()">耶！繼續加油</button>
+  </div>
+</div>
+
+<script>
+var DEF={
+  appTitle:'家庭財務中心',
+  cycleDay:10,
+  members:[{id:'cheryl',name:'Cheryl',baseIncome:57912},{id:'jo',name:'Jo',baseIncome:66294}],
+  payMethods:[{id:'p1',name:'Cube 信用卡'},{id:'p2',name:'HSBC 信用卡'},{id:'p3',name:'Jo 現金'},{id:'p4',name:'Cheryl 現金'},{id:'p5',name:'其他'}],
+  fixedCats:[{id:'f1',name:'台北房貸',limit:25000},{id:'f2',name:'台中租金',limit:23500},{id:'f3',name:'雙城水電瓦斯',limit:4500},{id:'f4',name:'手機電信網路',limit:3700},{id:'f5',name:'Gogoro',limit:500},{id:'f6',name:'Cheryl 保險費',limit:2229},{id:'f7',name:'Jo 保險費',limit:3715}],
+  varCats:[{id:'v1',name:'生活用品',limit:3000},{id:'v2',name:'外食吃喝',limit:5000},{id:'v4',name:'奢侈娛樂',limit:3000}],
+  subCats:[{id:'s1',name:'Claude',limit:1500,active:true},{id:'s2',name:'Apple iCloud',limit:200,active:true},{id:'s3',name:'Google Cloud',limit:335,active:true},{id:'s4',name:'Netflix',limit:467,active:true},{id:'s5',name:'Adobe',limit:2345,active:true},{id:'s6',name:'Epidemic Sound',limit:418,active:true},{id:'s7',name:'World Gym',limit:3000,active:true},{id:'s8',name:'ManyChat',limit:1434,active:true},{id:'s9',name:'Spotify',limit:171,active:true},{id:'s10',name:'HSBC 卡費',limit:667,active:true}],
+  savingsCats:[{id:'sv1',name:'緊急預備金',monthlyTarget:0,total:0},{id:'sv2',name:'生育基金',monthlyTarget:0,total:0},{id:'sv3',name:'投資基金',monthlyTarget:38000,total:0},{id:'sv4',name:'旅遊基金',monthlyTarget:0,total:0},{id:'sv5',name:'汽車基金',monthlyTarget:0,total:0}],
+  records:[],
+  monthlyIncome:{},
+  // stock holdings — batches
+  holdings:[
+    {id:'h1',owner:'Cheryl',symbol:'0050',name:'元大台灣50',shares:115,costPerShare:84.50,buyDate:'2026-04-16'},
+    {id:'h2',owner:'Cheryl',symbol:'0050',name:'元大台灣50',shares:50,costPerShare:96.40,buyDate:'2026-05-15'},
+    {id:'h3',owner:'Cheryl',symbol:'0050',name:'元大台灣50',shares:262,costPerShare:94.90,buyDate:'2026-05-18'},
+    {id:'h4',owner:'Cheryl',symbol:'2330',name:'台積電',shares:2,costPerShare:2170,buyDate:'2026-04-24'},
+    {id:'h5',owner:'Jo',symbol:'00646',name:'元大S&P500',shares:67,costPerShare:74.07,buyDate:'2026-05-15'},
+    {id:'h6',owner:'Jo',symbol:'00646',name:'元大S&P500',shares:337,costPerShare:73.45,buyDate:'2026-05-18'}
+  ],
+  prices:{} // {symbol: {price, updatedAt}}
+};
+
+var S=JSON.parse(localStorage.getItem('ffc6')||'null')||JSON.parse(JSON.stringify(DEF));
+if(!S.monthlyIncome) S.monthlyIncome={};
+if(!S.appTitle) S.appTitle='家庭財務中心';
+if(!S.payMethods) S.payMethods=JSON.parse(JSON.stringify(DEF.payMethods));
+if(!S.holdings) S.holdings=JSON.parse(JSON.stringify(DEF.holdings));
+if(!S.prices) S.prices={};
+
+var editingId=null,depSavId=null,viewOffset=0,curPage='home';
+var anMode='month',anStart=null,anEnd=null;
+
+function save(){localStorage.setItem('ffc6',JSON.stringify(S));}
+function fmtMoney(n){return 'NT$'+Math.round(n).toLocaleString();}
+function fmtMon(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月';}
+function fmtDateShort(d){return (d.getMonth()+1)+'/'+d.getDate();}
+
+// ── Period ──
+function getPeriodForOffset(off){
+  var now=new Date(),by=now.getFullYear(),bm=now.getMonth();
+  if(now.getDate()<S.cycleDay){bm--;if(bm<0){bm=11;by--;}}
+  var y=by,m=bm+(off||0);
+  while(m<0){m+=12;y--;} while(m>11){m-=12;y++;}
+  return {start:new Date(y,m,S.cycleDay),end:new Date(y,m+1,S.cycleDay-1),y:y,m:m};
+}
+function getPeriodKey(off){var p=getPeriodForOffset(off!=null?off:viewOffset);return p.y+'-'+(p.m<9?'0':'')+(p.m+1);}
+function getRecsInRange(s,e){return S.records.filter(function(r){var d=new Date(r.date);return d>=s&&d<=e;});}
+function getPeriodRecords(off){var p=getPeriodForOffset(off!=null?off:viewOffset);return getRecsInRange(p.start,p.end);}
+function catSpent(catId,type,off){return getPeriodRecords(off).filter(function(r){return r.type===type&&r.catId===catId;}).reduce(function(a,r){return a+r.amount;},0);}
+
+// ── Income ──
+function getMemberTotal(key,prefix){var mi=S.monthlyIncome[key];if(!mi||!mi.confirmed)return null;var d=mi[prefix]||{};return(d.base||0)+(d.side||0);}
+function getTotalIncome(off){var key=getPeriodKey(off!=null?off:viewOffset);var mi=S.monthlyIncome[key];if(mi&&mi.confirmed)return{total:(getMemberTotal(key,'cheryl')||0)+(getMemberTotal(key,'jo')||0),confirmed:true};return{total:S.members.reduce(function(a,m){return a+m.baseIncome;},0),confirmed:false};}
+function calcSummary(off){var recs=getPeriodRecords(off!=null?off:viewOffset);var inc=getTotalIncome(off!=null?off:viewOffset);var expense=recs.filter(function(r){return['fixed','var','sub'].indexOf(r.type)>=0;}).reduce(function(a,r){return a+r.amount;},0);var saved=recs.filter(function(r){return r.type==='savings';}).reduce(function(a,r){return a+r.amount;},0);return{totalIncome:inc.total,confirmed:inc.confirmed,expense:expense,saved:saved,left:inc.total-expense-saved};}
+
+function testApi(){
+  var token=localStorage.getItem('finmind_token')||'';
+  var resultEl=document.getElementById('api-test-result');
+  resultEl.style.display='block';
+  if(!token){
+    resultEl.style.background='#FEE2E2';resultEl.style.color='#A32D2D';
+    resultEl.textContent='❌ Token 未設定，請先儲存 Token';
+    return;
+  }
+  resultEl.style.background='#F8F8F5';resultEl.style.color='#666';
+  resultEl.textContent='連線中...';
+  var start=new Date();start.setDate(start.getDate()-5);
+  var startDate=start.toISOString().slice(0,10);
+  var url='https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=0050&start_date='+startDate+'&token='+token;
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.data&&data.data.length>0){
+        var last=data.data[data.data.length-1];
+        resultEl.style.background='#D1FAE5';resultEl.style.color='#065F46';
+        resultEl.textContent='✅ 連線成功！\n0050 最新收盤價：'+last.close+'\n日期：'+last.date;
+      } else {
+        resultEl.style.background='#FEF3CD';resultEl.style.color='#856404';
+        resultEl.textContent='⚠️ 連線成功但無資料\nAPI 回傳：'+JSON.stringify(data).slice(0,300);
+      }
+    })
+    .catch(function(e){
+      resultEl.style.background='#FEE2E2';resultEl.style.color='#A32D2D';
+      resultEl.textContent='❌ 連線失敗：'+e.message;
+    });
+}
+function fetchPrices(){
+  var token=localStorage.getItem('finmind_token')||'';
+  if(!token){alert('請先到「設定」頁面填入 Finmind API Token');return;}
+  var symbols=['0050','2330','00646'];
+  document.getElementById('inv-last-update').textContent='更新中...';
+  var today=new Date().toISOString().slice(0,10);
+  // get yesterday as start date to ensure we get data even after market close
+  var start=new Date();start.setDate(start.getDate()-5);
+  var startDate=start.toISOString().slice(0,10);
+  var done=0;
+  symbols.forEach(function(sym){
+    var url='https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id='+sym+'&start_date='+startDate+'&token='+token;
+    fetch(url)
+      .then(function(r){return r.json();})
+      .then(function(data){
+        try{
+          var arr=data.data;
+          if(arr&&arr.length>0){
+            var last=arr[arr.length-1];
+            var price=parseFloat(last.close)||0;
+            if(price>0){
+              S.prices[sym]={price:price,updatedAt:last.date+' 收盤'};
+            }
+          }
+        }catch(e){}
+        done++;
+        if(done===symbols.length){save();renderInvest();if(curPage==='analysis')renderAnalysis();}
+      })
+      .catch(function(){
+        done++;
+        if(done===symbols.length){save();renderInvest();alert('更新失敗，請確認 Token 是否正確');}
+      });
+  });
+}
+
+function getPrice(sym){return S.prices[sym]?S.prices[sym].price:null;}
+
+// ── Invest render ──
+function renderInvest(){
+  // group holdings by symbol
+  var symbols={};
+  S.holdings.forEach(function(h){
+    if(!symbols[h.symbol]) symbols[h.symbol]={name:h.name,batches:[],owner:h.owner};
+    symbols[h.symbol].batches.push(h);
+  });
+
+  var totalCost=0,totalVal=0,hasPrices=false;
+  Object.keys(symbols).forEach(function(sym){
+    var p=getPrice(sym);
+    if(p) hasPrices=true;
+    symbols[sym].batches.forEach(function(b){
+      totalCost+=b.shares*b.costPerShare;
+      if(p) totalVal+=b.shares*p;
+    });
+  });
+  if(!hasPrices) totalVal=totalCost;
+
+  var totalPnl=totalVal-totalCost;
+  var totalPnlPct=totalCost>0?((totalPnl/totalCost)*100):0;
+
+  // summary grid
+  document.getElementById('inv-summary-grid').innerHTML=
+    '<div class="inv-metric"><div class="inv-metric-label">家庭投入成本</div><div class="inv-metric-val">'+fmtMoney(totalCost)+'</div></div>'+
+    '<div class="inv-metric"><div class="inv-metric-label">目前市值</div><div class="inv-metric-val">'+(hasPrices?fmtMoney(totalVal):'—')+'</div></div>'+
+    '<div class="inv-metric"><div class="inv-metric-label">未實現損益</div><div class="inv-metric-val '+(totalPnl>=0?'cg':'cr')+'">'+(hasPrices?(totalPnl>=0?'+':'')+fmtMoney(totalPnl):'—')+'</div></div>'+
+    '<div class="inv-metric"><div class="inv-metric-label">損益 %</div><div class="inv-metric-val '+(totalPnlPct>=0?'cg':'cr')+'">'+(hasPrices?(totalPnlPct>=0?'+':'')+totalPnlPct.toFixed(2)+'%':'—')+'</div></div>';
+
+  // update time
+  var times=Object.values(S.prices).map(function(p){return p.updatedAt;});
+  document.getElementById('inv-last-update').textContent=times.length?('最後更新：'+times[0]):'尚未取得報價（點右側更新）';
+
+  // per-member
+  renderMemberInv('inv-cheryl','Cheryl');
+  renderMemberInv('inv-jo','Jo');
+}
+
+function renderMemberInv(elId,owner){
+  var el=document.getElementById(elId);
+  var holdings=S.holdings.filter(function(h){return h.owner===owner;});
+  if(!holdings.length){el.innerHTML='<div style="color:#888;font-size:13px">尚無持股</div>';return;}
+
+  // group by symbol
+  var groups={};
+  holdings.forEach(function(h){
+    if(!groups[h.symbol]) groups[h.symbol]={name:h.name,symbol:h.symbol,batches:[]};
+    groups[h.symbol].batches.push(h);
+  });
+
+  el.innerHTML=Object.keys(groups).map(function(sym){
+    var g=groups[sym];
+    var p=getPrice(sym);
+    var totalShares=g.batches.reduce(function(a,b){return a+b.shares;},0);
+    var totalCost=g.batches.reduce(function(a,b){return a+b.shares*b.costPerShare;},0);
+    var avgCost=totalCost/totalShares;
+    var totalVal=p?totalShares*p:null;
+    var totalPnl=totalVal?totalVal-totalCost:null;
+    var totalPnlPct=totalPnl!=null?((totalPnl/totalCost)*100):null;
+
+    var batchRows=g.batches.map(function(b){
+      var bVal=p?b.shares*p:null;
+      var bPnl=bVal?bVal-b.shares*b.costPerShare:null;
+      var bPct=bPnl!=null?((bPnl/(b.shares*b.costPerShare))*100):null;
+      var pnlStr=bPnl!=null?('<span class="'+(bPnl>=0?'inv-pnl-pos':'inv-pnl-neg')+'">'+(bPnl>=0?'+':'')+fmtMoney(bPnl)+' ('+(bPct>=0?'+':'')+bPct.toFixed(1)+'%)</span>'):'<span style="color:#888">待更新</span>';
+      return '<div class="inv-batch"><span class="inv-batch-left">'+b.buyDate+' · '+b.shares+'股 @'+b.costPerShare+'</span>'+pnlStr+'</div>';
+    }).join('');
+
+    var totalStr=totalPnl!=null?('<span class="'+(totalPnl>=0?'inv-pnl-pos':'inv-pnl-neg')+'">'+(totalPnl>=0?'+':'')+fmtMoney(totalPnl)+' ('+(totalPnlPct>=0?'+':'')+totalPnlPct.toFixed(2)+'%)</span>'):'<span style="color:#888">—</span>';
+
+    return '<div class="inv-stock">'+
+      '<div class="inv-stock-header">'+
+        '<div><span class="inv-stock-name">'+g.symbol+' '+g.name+'</span></div>'+
+        '<div class="inv-stock-price">'+(p?('收盤 NT$'+p):'點更新取得報價')+'</div>'+
+      '</div>'+
+      batchRows+
+      '<div class="inv-total-row"><span>合計 '+totalShares+'股 · 均價 '+avgCost.toFixed(1)+'</span>'+totalStr+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── Topbar ──
+function updateTopbar(){
+  var p=getPeriodForOffset(viewOffset);
+  document.getElementById('month-label').textContent=fmtMon(p.start);
+  document.getElementById('log-period-hdr').textContent=fmtMon(p.start)+' 記帳記錄';
+  var key=getPeriodKey();var mi=S.monthlyIncome[key];
+  var btn=document.getElementById('payday-main-btn');
+  if(mi&&mi.confirmed){btn.textContent='✅ 收入已確認';btn.style.background='#0F6E56';}
+  else{btn.textContent='💰 發薪了！';btn.style.background='#534AB7';}
+}
+
+// ── Home ──
+function renderHome(){
+  updateTopbar();
+  var sum=calcSummary();
+  document.getElementById('m-income').textContent=fmtMoney(sum.totalIncome);
+  document.getElementById('m-income-sub').textContent=sum.confirmed?'實際確認收入':'預估（底薪）';
+  var tag=document.getElementById('income-status-tag');
+  tag.innerHTML=sum.confirmed?'<span class="act-tag">已確認</span>':'<span class="est-tag">預估</span>';
+  document.getElementById('m-expense').textContent=fmtMoney(sum.expense);
+  document.getElementById('m-saved').textContent=fmtMoney(sum.saved);
+  var el=document.getElementById('m-left');
+  el.textContent=fmtMoney(sum.left);
+  el.className='metric-val '+(sum.left>=0?'cg':'cr');
+  renderIncomeDetail();
+  renderProg('fixed-prog',S.fixedCats,'fixed');
+  renderProg('var-prog',S.varCats,'var');
+  renderProg('sub-prog',S.subCats.filter(function(c){return c.active;}),'sub');
+  renderRecentLog();
+}
+
+function renderIncomeDetail(){
+  var key=getPeriodKey();var mi=S.monthlyIncome[key];var el=document.getElementById('income-detail-rows');
+  if(!mi||!mi.confirmed){el.innerHTML='<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px"><span style="color:#888">尚未確認本月收入</span><button class="edit-btn" style="padding:0;font-size:13px" onclick="openPayday()">立即確認 →</button></div><div style="font-size:12px;color:#888">目前使用預設底薪估算：'+fmtMoney(S.members.reduce(function(a,m){return a+m.baseIncome;},0))+'</div>';return;}
+  el.innerHTML=S.members.map(function(m){var pre=m.id==='cheryl'?'cheryl':'jo';var d=mi[pre]||{};var lines=[];if(d.base)lines.push('主業 '+fmtMoney(d.base));if(d.side)lines.push('副業 +'+fmtMoney(d.side));var total=getMemberTotal(key,pre)||0;return'<div class="income-member-row"><div><div class="income-member-name">'+m.name+'</div><div class="income-items">'+(lines.join(' · ')||'—')+'</div></div><div class="income-total">'+fmtMoney(total)+'</div></div>';}).join('');
+}
+
+function renderProg(elId,cats,type){
+  var el=document.getElementById(elId);
+  if(!cats.length){el.innerHTML='<div style="font-size:13px;color:#888;padding:4px 0">暫無項目</div>';return;}
+  el.innerHTML=cats.map(function(c){var spent=catSpent(c.id,type);var pct=c.limit>0?Math.min(100,Math.round((spent/c.limit)*100)):0;var cls=pct<70?'fok':pct<100?'fwarn':'fover';var col=pct>=100?'#A32D2D':pct>=70?'#BA7517':'#534AB7';return'<div class="prog-row"><div class="prog-header"><span class="prog-name">'+c.name+'</span><span class="prog-amounts">'+fmtMoney(spent)+' / '+fmtMoney(c.limit)+' <span style="color:'+col+'">'+pct+'%</span></span></div><div class="prog-bar"><div class="prog-fill '+cls+'" style="width:'+pct+'%"></div></div></div>';}).join('');
+}
+
+function getCatName(r){return([].concat(S.fixedCats,S.varCats,S.subCats,S.savingsCats).find(function(c){return c.id===r.catId;})||{name:'未分類'}).name;}
+function getPayName(pid){if(!pid)return'';return(S.payMethods.find(function(p){return p.id===pid;})||{name:pid}).name;}
+var typeLabel=function(t){return{fixed:'固定支出',var:'浮動支出',sub:'訂閱費','income-extra':'額外收入',savings:'基金存款'}[t]||t;};
+
+function logHTML(r,showAct){
+  var bc=r.member==='Jo'?'bj':r.member==='共同'?'bs':'bc';
+  var ac=r.type==='income-extra'?'cg':r.type==='savings'?'cb':'cr';
+  var sign=r.type==='income-extra'?'+':'-';
+  var pn=getPayName(r.payId);
+  var acts=showAct?'<button class="log-act" style="color:#534AB7;font-size:13px" onclick="editRecord(\''+r.id+'\')">✎</button><button class="log-act" style="color:#A32D2D" onclick="delRecord(\''+r.id+'\')">×</button>':'';
+  return'<div class="log-item"><div class="log-left"><div class="log-name">'+getCatName(r)+(r.note?'<span style="font-weight:400;color:#888;font-size:11px"> · '+r.note+'</span>':'')+'<span class="badge '+bc+'">'+r.member+'</span>'+(pn?'<span class="pay-badge">'+pn+'</span>':'')+'</div><div class="log-meta">'+typeLabel(r.type)+' · '+r.date+'</div></div><div class="log-right"><span class="log-amt '+ac+'">'+sign+fmtMoney(r.amount)+'</span>'+acts+'</div></div>';
+}
+function renderRecentLog(){var recs=[].concat(getPeriodRecords()).sort(function(a,b){return new Date(b.date)-new Date(a.date);}).slice(0,6);document.getElementById('recent-log').innerHTML=recs.length?recs.map(function(r){return logHTML(r,false);}).join(''):'<div style="color:#888;font-size:14px;padding:14px 0;text-align:center">還沒有記帳記錄</div>';}
+function renderAllLog(){updateTopbar();var tf=document.getElementById('log-filter').value,mf=document.getElementById('log-member-filter').value,pf=document.getElementById('log-pay-filter').value;var recs=[].concat(getPeriodRecords()).sort(function(a,b){return new Date(b.date)-new Date(a.date);});if(tf!=='all')recs=recs.filter(function(r){return r.type===tf;});if(mf!=='all')recs=recs.filter(function(r){return r.member===mf;});if(pf!=='all')recs=recs.filter(function(r){return r.payId===pf;});document.getElementById('all-log').innerHTML=recs.length?recs.map(function(r){return logHTML(r,true);}).join(''):'<div style="color:#888;font-size:14px;padding:14px 0;text-align:center">此條件無記錄</div>';}
+function refreshPayFilter(){var sel=document.getElementById('log-pay-filter');if(!sel)return;sel.innerHTML='<option value="all">全部付款</option>'+S.payMethods.map(function(p){return'<option value="'+p.id+'">'+p.name+'</option>';}).join('');}
+
+// ── Savings ──
+function renderSavings(){
+  renderInvest();
+  var pr=getPeriodRecords();
+  document.getElementById('savings-cards').innerHTML=S.savingsCats.map(function(c){
+    var md=pr.filter(function(r){return r.type==='savings'&&r.catId===c.id;}).reduce(function(a,r){return a+r.amount;},0);
+    var pct=c.monthlyTarget>0?Math.min(100,Math.round((md/c.monthlyTarget)*100)):null;
+    var bar=pct!==null?'<div class="prog-bar" style="margin-bottom:10px"><div class="prog-fill fok" style="width:'+pct+'%"></div></div>':'';
+    var hist=S.records.filter(function(r){return r.type==='savings'&&r.catId===c.id;}).sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    var hh=hist.length?hist.slice(0,8).map(function(r){var bc=r.member==='Jo'?'bj':r.member==='共同'?'bs':'bc';return'<div class="sav-hist-item"><span>'+r.date+'<span class="badge '+bc+'">'+r.member+'</span>'+(getPayName(r.payId)?'<span class="pay-badge">'+getPayName(r.payId)+'</span>':'')+'</span><span style="color:#185FA5;font-weight:500">+'+fmtMoney(r.amount)+'</span></div>';}).join(''):'<div style="font-size:12px;color:#888;padding:4px 0">尚無記錄</div>';
+    return'<div class="sav-card"><div class="sav-top"><div class="sav-name">'+c.name+'</div><div class="sav-tgt">'+(c.monthlyTarget>0?'月目標 '+fmtMoney(c.monthlyTarget):'彈性存入')+'</div></div>'+bar+'<div class="sav-total">'+fmtMoney(c.total)+'</div><div class="sav-monthly">本月已存 '+fmtMoney(md)+(pct!==null?' · '+pct+'%':'')+'</div><button class="dep-btn" onclick="openDep(\''+c.id+'\',\''+c.name+'\')">+ 存入</button><button class="sav-hist-btn" onclick="togHist(\'hist-'+c.id+'\',this)">▸ 存款記錄</button><div class="sav-hist" id="hist-'+c.id+'">'+hh+'</div></div>';
+  }).join('');
+}
+function togHist(id,btn){var el=document.getElementById(id);el.classList.toggle('open');btn.textContent=el.classList.contains('open')?'▾ 收起':'▸ 存款記錄';}
+
+// ── Analysis ──
+function getAnRange(){var now=new Date();if(anMode==='custom'&&anStart&&anEnd)return{s:new Date(anStart),e:new Date(anEnd)};if(anMode==='week'){var s=new Date(now);s.setDate(now.getDate()-now.getDay()+1);var e=new Date(s);e.setDate(s.getDate()+6);return{s:s,e:e};}if(anMode==='month'){var p=getPeriodForOffset(0);return{s:p.start,e:p.end};}if(anMode==='quarter'){var q=Math.floor(now.getMonth()/3);return{s:new Date(now.getFullYear(),q*3,1),e:new Date(now.getFullYear(),q*3+3,0)};}return{s:new Date(now.getFullYear(),0,1),e:new Date(now.getFullYear(),11,31)};}
+function setQuick(mode,btn){anMode=mode;document.querySelectorAll('.range-chip').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');document.getElementById('custom-range').style.display=mode==='custom'?'block':'none';if(mode!=='custom')renderAnalysis();}
+function applyCustomRange(){anStart=document.getElementById('an-start').value;anEnd=document.getElementById('an-end').value;if(!anStart||!anEnd){alert('請選擇日期');return;}renderAnalysis();}
+function buildSegments(s,e){var diff=Math.round((e-s)/86400000),segs=[];if(diff<=14){var step=Math.max(1,Math.floor(diff/6));for(var d=new Date(s);d<=e;){var se=new Date(d);se.setDate(se.getDate()+step-1);if(se>e)se.setTime(e.getTime());segs.push({s:new Date(d),e:new Date(se),lbl:(d.getMonth()+1)+'/'+(d.getDate())});d.setDate(d.getDate()+step);}}else if(diff<=93){var cur=new Date(s);while(cur<=e){var ws=new Date(cur),we=new Date(cur);we.setDate(we.getDate()+6);if(we>e)we.setTime(e.getTime());segs.push({s:ws,e:we,lbl:(ws.getMonth()+1)+'/'+(ws.getDate())});cur.setDate(cur.getDate()+7);}}else{var cy=s.getFullYear(),cm=s.getMonth();while(true){var ms=new Date(cy,cm,1),me=new Date(cy,cm+1,0);var rs=ms<s?s:ms,re=me>e?e:me;segs.push({s:rs,e:re,lbl:(cm+1)+'月'});if(cm===e.getMonth()&&cy===e.getFullYear())break;cm++;if(cm>11){cm=0;cy++;}}}return segs.slice(0,12);}
+
+function renderAnalysis(){
+  var r=getAnRange();
+  document.getElementById('an-range-label').textContent='查看區間：'+r.s.getFullYear()+'年 '+fmtDateShort(r.s)+' — '+fmtDateShort(r.e);
+  var recs=getRecsInRange(r.s,r.e);
+  var colors={fixed:'#534AB7',var:'#1D9E75',sub:'#D85A30'};
+  var segs=buildSegments(r.s,r.e);
+  var sd=segs.map(function(sg){var sr=getRecsInRange(sg.s,sg.e);var fx=sr.filter(function(r){return r.type==='fixed';}).reduce(function(a,r){return a+r.amount;},0);var vr=sr.filter(function(r){return r.type==='var';}).reduce(function(a,r){return a+r.amount;},0);var sb=sr.filter(function(r){return r.type==='sub';}).reduce(function(a,r){return a+r.amount;},0);return{lbl:sg.lbl,fixed:fx,var:vr,sub:sb,total:fx+vr+sb};});
+  var maxV=Math.max.apply(null,sd.map(function(d){return d.total;}).concat([1]));
+  document.getElementById('trend-chart').innerHTML=sd.map(function(d){var hf=Math.round((d.fixed/maxV)*95),hv=Math.round((d.var/maxV)*95),hs=Math.round((d.sub/maxV)*95);return'<div class="mbar-group"><div style="display:flex;flex-direction:column;align-items:center;gap:1px;justify-content:flex-end;height:100px"><div class="mbar" style="background:'+colors.sub+';height:'+hs+'px"></div><div class="mbar" style="background:'+colors.var+';height:'+hv+'px"></div><div class="mbar" style="background:'+colors.fixed+';height:'+hf+'px"></div></div><div class="mbar-lbl">'+d.lbl+'</div></div>';}).join('');
+  document.getElementById('trend-legend').innerHTML=[['固定',colors.fixed],['浮動',colors.var],['訂閱',colors.sub]].map(function(x){return'<div class="legend-item"><div class="legend-dot" style="background:'+x[1]+'"></div>'+x[0]+'</div>';}).join('');
+  var cats=[].concat(S.fixedCats,S.varCats,S.subCats.filter(function(c){return c.active;}));
+  var cd=cats.map(function(c){return{name:c.name,amt:recs.filter(function(r){return r.catId===c.id;}).reduce(function(a,r){return a+r.amount;},0)};}).filter(function(d){return d.amt>0;}).sort(function(a,b){return b.amt-a.amt;});
+  var te=cd.reduce(function(a,d){return a+d.amt;},0);
+  document.getElementById('cat-breakdown').innerHTML=cd.length?cd.map(function(d){var p=Math.round((d.amt/te)*100);return'<div class="prog-row"><div class="prog-header"><span class="prog-name">'+d.name+'</span><span class="prog-amounts">'+fmtMoney(d.amt)+' · '+p+'%</span></div><div class="prog-bar"><div class="prog-fill fok" style="width:'+p+'%"></div></div></div>';}).join(''):'<div style="font-size:13px;color:#888">此區間無支出</div>';
+  var pd=S.payMethods.map(function(p){return{name:p.name,amt:recs.filter(function(r){return r.payId===p.id;}).reduce(function(a,r){return a+r.amount;},0)};}).filter(function(d){return d.amt>0;}).sort(function(a,b){return b.amt-a.amt;});
+  var tp=pd.reduce(function(a,d){return a+d.amt;},0);
+  document.getElementById('pay-breakdown').innerHTML=pd.length?pd.map(function(d){var p=Math.round((d.amt/tp)*100);return'<div class="prog-row"><div class="prog-header"><span class="prog-name">'+d.name+'</span><span class="prog-amounts">'+fmtMoney(d.amt)+' · '+p+'%</span></div><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:#1D9E75"></div></div></div>';}).join(''):'<div style="font-size:13px;color:#888">此區間無付款記錄</div>';
+
+  // investment summary in analysis
+  var totalCost=S.holdings.reduce(function(a,h){return a+h.shares*h.costPerShare;},0);
+  var hasPrices=Object.keys(S.prices).length>0;
+  var totalVal=hasPrices?S.holdings.reduce(function(a,h){var p=getPrice(h.symbol);return a+(p?h.shares*p:h.shares*h.costPerShare);},0):totalCost;
+  var totalPnl=totalVal-totalCost;
+  var totalPct=totalCost>0?((totalPnl/totalCost)*100):0;
+  var symGroups={};
+  S.holdings.forEach(function(h){if(!symGroups[h.symbol])symGroups[h.symbol]={name:h.name,shares:0,cost:0};symGroups[h.symbol].shares+=h.shares;symGroups[h.symbol].cost+=h.shares*h.costPerShare;});
+  document.getElementById('an-invest').innerHTML=
+    '<div class="brow"><span>家庭投入總成本</span><span>'+fmtMoney(totalCost)+'</span></div>'+
+    '<div class="brow"><span>目前總市值</span><span>'+(hasPrices?fmtMoney(totalVal):'待更新')+'</span></div>'+
+    '<div class="brow"><span>未實現損益</span><span class="'+(totalPnl>=0?'cg':'cr')+'">'+(hasPrices?(totalPnl>=0?'+':'')+fmtMoney(totalPnl)+' ('+(totalPct>=0?'+':'')+totalPct.toFixed(2)+'%)':'待更新')+'</span></div>'+
+    '<div class="brow" style="border-bottom:none"><span style="color:#888;font-size:13px">各標的成本</span></div>'+
+    Object.keys(symGroups).map(function(sym){var g=symGroups[sym];var p=getPrice(sym);var val=p?g.shares*p:null;var pnl=val?val-g.cost:null;var pct=pnl!=null?((pnl/g.cost)*100):null;return'<div class="brow" style="padding-left:12px;font-size:13px"><span>'+sym+' '+g.name+'<br><span style="color:#888">'+g.shares+'股 · 成本 '+fmtMoney(g.cost)+'</span></span><span class="'+(pnl!=null?(pnl>=0?'cg':'cr'):'')+'">'+( pnl!=null?((pnl>=0?'+':'')+fmtMoney(pnl)+'<br>'+(pct>=0?'+':'')+pct.toFixed(2)+'%'):'待更新')+'</span></div>';}).join('')+
+    '<div class="brow" style="font-size:11px;color:#888;border-bottom:none;padding-top:6px"><span>前往「投資&基金」頁點「更新報價」取得最新數據</span></div>';
+
+  var yr=new Date().getFullYear();var ay=S.records.filter(function(r){return r.date.startsWith(yr+'');});var ye=ay.filter(function(r){return['fixed','var','sub'].indexOf(r.type)>=0;}).reduce(function(a,r){return a+r.amount;},0);var ys=ay.filter(function(r){return r.type==='savings';}).reduce(function(a,r){return a+r.amount;},0);
+  document.getElementById('yearly-summary').innerHTML='<div class="brow"><span>'+yr+' 年總支出</span><span class="cr">'+fmtMoney(ye)+'</span></div><div class="brow"><span>'+yr+' 年已存基金</span><span class="cb">'+fmtMoney(ys)+'</span></div><div class="brow" style="border-bottom:none"><span>各基金累計</span></div>'+S.savingsCats.map(function(c){return'<div class="brow" style="padding-left:12px;font-size:13px"><span>'+c.name+'</span><span class="cb">'+fmtMoney(c.total)+'</span></div>';}).join('');
+}
+
+// ── Settings ──
+function renderSettings(){
+  document.getElementById('cycle-day-val').textContent=S.cycleDay+'號';
+  document.getElementById('app-title-val').textContent=S.appTitle;
+  updateTokenStatus();
+  document.getElementById('income-settings').innerHTML=S.members.map(function(m){return'<div class="sitem"><div><div class="slabel">'+m.name+' 預設底薪</div><div class="ssub">發薪時可覆蓋</div></div><div style="display:flex;align-items:center;gap:6px"><span class="sval">'+fmtMoney(m.baseIncome)+'</span><button class="edit-btn" onclick="editIncome(\''+m.id+'\')">修改</button></div></div>';}).join('');
+  renderPaySet();renderCatSet('fixed-settings',S.fixedCats,'fixed');renderCatSet('var-settings',S.varCats,'var');renderSubSet();renderSavSet();
+}
+function renderPaySet(){document.getElementById('pay-settings').innerHTML=S.payMethods.map(function(p){return'<div class="elist-item"><input value="'+p.name+'" onchange="updPayName(\''+p.id+'\',this.value)"><button class="del-btn" onclick="delPay(\''+p.id+'\')">×</button></div>';}).join('')+'<button class="add-row-btn" onclick="addPay()">+ 新增</button>';refreshPayFilter();refreshPaySelects();}
+function renderCatSet(elId,cats,type){document.getElementById(elId).innerHTML=cats.map(function(c){return'<div class="elist-item"><input value="'+c.name+'" onchange="updCatName(\''+type+'\',\''+c.id+'\',this.value)"><input class="narrow" type="number" value="'+c.limit+'" onchange="updCatLimit(\''+type+'\',\''+c.id+'\',this.value)" placeholder="限額"><button class="del-btn" onclick="delCat(\''+type+'\',\''+c.id+'\')">×</button></div>';}).join('')+'<button class="add-row-btn" onclick="addCat(\''+type+'\')">+ 新增</button>';}
+function renderSubSet(){document.getElementById('sub-settings').innerHTML=S.subCats.map(function(c){return'<div class="elist-item"><input value="'+c.name+'" onchange="updSubName(\''+c.id+'\',this.value)"><input class="narrow" type="number" value="'+c.limit+'" onchange="updSubLimit(\''+c.id+'\',this.value)"><label class="toggle"><input type="checkbox" '+(c.active?'checked':'')+' onchange="togSub(\''+c.id+'\',this.checked)"><span class="tslider"></span></label><button class="del-btn" onclick="delSub(\''+c.id+'\')">×</button></div>';}).join('')+'<button class="add-row-btn" onclick="addSub()">+ 新增</button>';}
+function renderSavSet(){document.getElementById('savings-settings').innerHTML=S.savingsCats.map(function(c){return'<div class="elist-item"><input value="'+c.name+'" onchange="updSavName(\''+c.id+'\',this.value)"><input class="narrow" type="number" value="'+c.monthlyTarget+'" onchange="updSavTarget(\''+c.id+'\',this.value)" placeholder="月目標"><button class="del-btn" onclick="delSav(\''+c.id+'\')">×</button></div>';}).join('')+'<button class="add-row-btn" onclick="addSav()">+ 新增</button>';}
+function refreshPaySelects(){var opts='<option value="">— 不指定 —</option>'+S.payMethods.map(function(p){return'<option value="'+p.id+'">'+p.name+'</option>';}).join('');['add-pay','dep-pay'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML=opts;});}
+
+// ── Nav ──
+function nav(page,btn){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.nav-item').forEach(function(b){b.classList.remove('active');});document.getElementById('pg-'+page).classList.add('active');btn.classList.add('active');curPage=page;if(page==='home')renderHome();else if(page==='log'){refreshPayFilter();renderAllLog();}else if(page==='savings')renderSavings();else if(page==='analysis')renderAnalysis();else if(page==='settings')renderSettings();}
+function shiftMonth(d){viewOffset+=d;refreshPage();}
+function goToday(){viewOffset=0;refreshPage();}
+function refreshPage(){updateTopbar();if(curPage==='home')renderHome();else if(curPage==='log')renderAllLog();else if(curPage==='savings')renderSavings();else if(curPage==='analysis')renderAnalysis();}
+
+// ── Payday ──
+function updSubtotals(){var cv=function(id){return parseFloat(document.getElementById(id).value)||0;};document.getElementById('c-subtotal').textContent=fmtMoney(cv('c-base')+cv('c-side'));document.getElementById('j-subtotal').textContent=fmtMoney(cv('j-base')+cv('j-side'));}
+function openPayday(){var p=getPeriodForOffset(viewOffset);document.getElementById('pday-period-label').textContent=fmtMon(p.start)+' 收入確認';var key=getPeriodKey();var mi=S.monthlyIncome[key]||{};var cd=mi.cheryl||{};var jd=mi.jo||{};document.getElementById('c-base').value=cd.base!=null?cd.base:S.members[0].baseIncome;document.getElementById('c-side').value=cd.side||'';document.getElementById('j-base').value=jd.base!=null?jd.base:S.members[1].baseIncome;document.getElementById('j-side').value=jd.side||'';updSubtotals();var ft=S.fixedCats.reduce(function(a,c){return a+c.limit;},0);var vt=S.varCats.reduce(function(a,c){return a+c.limit;},0);var st=S.subCats.filter(function(c){return c.active;}).reduce(function(a,c){return a+c.limit;},0);var svt=S.savingsCats.reduce(function(a,c){return a+c.monthlyTarget;},0);document.getElementById('pday-budget-rows').innerHTML='<div class="brow" style="font-size:13px;color:#888"><span>預算參考</span></div><div class="brow" style="font-size:13px"><span>固定支出</span><span class="cr">－'+fmtMoney(ft)+'</span></div><div class="brow" style="font-size:13px"><span>浮動支出</span><span class="cr">－'+fmtMoney(vt)+'</span></div><div class="brow" style="font-size:13px"><span>訂閱費</span><span class="cr">－'+fmtMoney(st)+'</span></div><div class="brow" style="font-size:13px"><span>儲蓄基金</span><span class="cb">－'+fmtMoney(svt)+'</span></div>';document.getElementById('payday-modal').classList.add('open');}
+function closePayday(){document.getElementById('payday-modal').classList.remove('open');}
+function confirmPayday(){var cv=function(id){return parseFloat(document.getElementById(id).value)||0;};var key=getPeriodKey();S.monthlyIncome[key]={confirmed:true,cheryl:{base:cv('c-base'),side:cv('c-side')},jo:{base:cv('j-base'),side:cv('j-side')}};save();closePayday();renderHome();}
+
+// ── Add/Edit ──
+function openAdd(){editingId=null;document.getElementById('add-modal-title').textContent='新增記帳';document.getElementById('add-date').value=new Date().toISOString().slice(0,10);document.getElementById('add-amount').value='';document.getElementById('add-note').value='';refreshPaySelects();updateAddCat();document.getElementById('add-modal').classList.add('open');}
+function editRecord(id){var r=S.records.find(function(x){return x.id===id;});if(!r)return;editingId=id;document.getElementById('add-modal-title').textContent='編輯記帳';document.getElementById('add-type').value=r.type;updateAddCat();document.getElementById('add-cat').value=r.catId;document.getElementById('add-amount').value=r.amount;document.getElementById('add-note').value=r.note||'';document.getElementById('add-member').value=r.member;document.getElementById('add-date').value=r.date;refreshPaySelects();if(r.payId)document.getElementById('add-pay').value=r.payId;document.getElementById('add-modal').classList.add('open');}
+function closeAdd(){document.getElementById('add-modal').classList.remove('open');editingId=null;}
+function updateAddCat(){var type=document.getElementById('add-type').value;var cats=type==='fixed'?S.fixedCats:type==='var'?S.varCats:type==='sub'?S.subCats.filter(function(c){return c.active;}):[{id:'extra',name:'額外收入'}];document.getElementById('add-cat').innerHTML=cats.map(function(c){return'<option value="'+c.id+'">'+c.name+'</option>';}).join('');}
+function saveRecord(){var type=document.getElementById('add-type').value,catId=document.getElementById('add-cat').value,amount=parseFloat(document.getElementById('add-amount').value)||0,note=document.getElementById('add-note').value.trim(),member=document.getElementById('add-member').value,date=document.getElementById('add-date').value,payId=document.getElementById('add-pay').value||'';if(!amount){alert('請輸入金額');return;}if(editingId){var r=S.records.find(function(x){return x.id===editingId;});if(r){r.type=type;r.catId=catId;r.amount=amount;r.note=note;r.member=member;r.date=date;r.payId=payId;}}else{S.records.push({id:Date.now().toString(),type:type,catId:catId,amount:amount,note:note,member:member,date:date,payId:payId});checkAlert(type,catId);}save();closeAdd();refreshPage();}
+function delRecord(id){if(!confirm('確定刪除？'))return;S.records=S.records.filter(function(r){return r.id!==id;});save();refreshPage();}
+function checkAlert(type,catId){var cats=type==='fixed'?S.fixedCats:type==='var'?S.varCats:type==='sub'?S.subCats:[];var cat=cats.find(function(c){return c.id===catId;});if(!cat||!cat.limit)return;var spent=catSpent(catId,type);var pct=(spent/cat.limit)*100;if(pct>=100)alert('⚠️「'+cat.name+'」本月已超支！');else if(pct>=80)alert('📢「'+cat.name+'」已用 '+Math.round(pct)+'%，接近上限！');}
+
+// ── Deposit ──
+function openDep(id,name){depSavId=id;document.getElementById('dep-title').textContent='存入「'+name+'」';document.getElementById('dep-amount').value='';document.getElementById('dep-note').value='';refreshPaySelects();document.getElementById('dep-modal').classList.add('open');}
+function closeDep(){document.getElementById('dep-modal').classList.remove('open');}
+function saveDep(){var amount=parseFloat(document.getElementById('dep-amount').value)||0,member=document.getElementById('dep-member').value,note=document.getElementById('dep-note').value.trim(),payId=document.getElementById('dep-pay').value||'';if(!amount){alert('請輸入金額');return;}var date=new Date().toISOString().slice(0,10);S.records.push({id:Date.now().toString(),type:'savings',catId:depSavId,amount:amount,note:note,member:member,date:date,payId:payId});var sav=S.savingsCats.find(function(c){return c.id===depSavId;});if(sav)sav.total+=amount;save();closeDep();renderSavings();showCele(sav?sav.name:'基金',amount);}
+
+// ── Celebration ──
+var fwAnim=null;
+function showCele(name,amt){document.getElementById('cele-title').textContent='成功存入「'+name+'」！';document.getElementById('cele-sub').textContent='＋'+fmtMoney(amt)+'，繼續努力！';document.getElementById('cele').classList.add('show');launchFW();}
+function closeCele(){document.getElementById('cele').classList.remove('show');if(fwAnim){cancelAnimationFrame(fwAnim);fwAnim=null;}}
+function launchFW(){var cv=document.getElementById('fw'),ctx=cv.getContext('2d');cv.width=window.innerWidth;cv.height=window.innerHeight;var pts=[];for(var i=0;i<7;i++){var x=Math.random()*cv.width,y=Math.random()*cv.height*0.5,h=Math.random()*360;for(var j=0;j<45;j++){var a=Math.random()*Math.PI*2,sp=2+Math.random()*5;pts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color:'hsl('+h+',100%,60%)'});}}function draw(){ctx.clearRect(0,0,cv.width,cv.height);pts.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.07;p.life-=0.013;ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;if(pts.some(function(p){return p.life>0;}))fwAnim=requestAnimationFrame(draw);}draw();}
+
+// ── Settings mutations ──
+function editCycleDay(){var v=prompt('月結起始日（1–28）：',S.cycleDay),n=parseInt(v);if(n>=1&&n<=28){S.cycleDay=n;save();renderSettings();}}
+function editAppTitle(){var v=prompt('帳本名稱：',S.appTitle);if(v&&v.trim()){S.appTitle=v.trim();document.getElementById('app-title').textContent=S.appTitle;document.getElementById('app-title-val').textContent=S.appTitle;save();}}
+function saveToken(){
+  var v=document.getElementById('token-input').value.trim();
+  if(v){localStorage.setItem('finmind_token',v);updateTokenStatus();alert('✅ Token 已儲存！');}
+  else{localStorage.removeItem('finmind_token');updateTokenStatus();}
+}
+function updateTokenStatus(){
+  var el=document.getElementById('token-status');if(!el)return;
+  var inp=document.getElementById('token-input');
+  var t=localStorage.getItem('finmind_token')||'';
+  if(t){
+    el.textContent='✅ 已設定';el.style.color='#0F6E56';
+    if(inp) inp.value='';inp.placeholder='重新貼上可更新 Token';
+  } else {
+    el.textContent='未設定，股價無法自動更新';el.style.color='#888';
+  }
+}
+function editIncome(id){var m=S.members.find(function(x){return x.id===id;});if(!m)return;var v=prompt(m.name+' 預設底薪（稅後）：',m.baseIncome),n=parseFloat(v);if(!isNaN(n)&&n>0){m.baseIncome=n;save();renderSettings();}}
+function updPayName(id,v){var p=S.payMethods.find(function(x){return x.id===id;});if(p){p.name=v;save();}}
+function delPay(id){if(!confirm('確定刪除？'))return;S.payMethods=S.payMethods.filter(function(p){return p.id!==id;});save();renderPaySet();}
+function addPay(){S.payMethods.push({id:'p'+Date.now(),name:'新付款方式'});save();renderPaySet();}
+function updCatName(t,id,v){var arr=t==='fixed'?S.fixedCats:t==='var'?S.varCats:S.subCats;var c=arr.find(function(x){return x.id===id;});if(c){c.name=v;save();}}
+function updCatLimit(t,id,v){var arr=t==='fixed'?S.fixedCats:t==='var'?S.varCats:S.subCats;var c=arr.find(function(x){return x.id===id;});if(c){c.limit=parseFloat(v)||0;save();}}
+function delCat(t,id){if(!confirm('確定刪除？'))return;if(t==='fixed')S.fixedCats=S.fixedCats.filter(function(c){return c.id!==id;});else if(t==='var')S.varCats=S.varCats.filter(function(c){return c.id!==id;});save();renderCatSet(t==='fixed'?'fixed-settings':'var-settings',t==='fixed'?S.fixedCats:S.varCats,t);}
+function addCat(t){var id='c'+Date.now();if(t==='fixed')S.fixedCats.push({id:id,name:'新項目',limit:0});else S.varCats.push({id:id,name:'新項目',limit:0});save();renderCatSet(t==='fixed'?'fixed-settings':'var-settings',t==='fixed'?S.fixedCats:S.varCats,t);}
+function updSubName(id,v){var c=S.subCats.find(function(x){return x.id===id;});if(c){c.name=v;save();}}
+function updSubLimit(id,v){var c=S.subCats.find(function(x){return x.id===id;});if(c){c.limit=parseFloat(v)||0;save();}}
+function togSub(id,v){var c=S.subCats.find(function(x){return x.id===id;});if(c){c.active=v;save();}}
+function delSub(id){if(!confirm('確定刪除？'))return;S.subCats=S.subCats.filter(function(c){return c.id!==id;});save();renderSubSet();}
+function addSub(){S.subCats.push({id:'s'+Date.now(),name:'新訂閱',limit:0,active:true});save();renderSubSet();}
+function updSavName(id,v){var c=S.savingsCats.find(function(x){return x.id===id;});if(c){c.name=v;save();}}
+function updSavTarget(id,v){var c=S.savingsCats.find(function(x){return x.id===id;});if(c){c.monthlyTarget=parseFloat(v)||0;save();}}
+function delSav(id){if(!confirm('確定刪除？'))return;S.savingsCats=S.savingsCats.filter(function(c){return c.id!==id;});save();renderSavSet();}
+function addSav(){S.savingsCats.push({id:'sv'+Date.now(),name:'新基金',monthlyTarget:0,total:0});save();renderSavSet();}
+
+// init
+refreshPaySelects();
+document.getElementById('app-title').textContent=S.appTitle;
+updateTokenStatus();
+renderHome();
+</script>
