@@ -258,7 +258,14 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
       <div id="api-test-result" style="display:none;margin-top:4px;padding:10px;border-radius:8px;font-size:13px;line-height:1.6;word-break:break-all;white-space:pre-wrap"></div>
     </div>
   </div>
-  <div class="sec-hdr">成員預設底薪</div>
+  <div class="sec-hdr">資料管理</div>
+  <div class="card sset" style="padding:0 14px">
+    <div class="sitem" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div><div class="slabel">匯入舊版資料</div><div class="ssub">把之前存在本機的記帳記錄搬到雲端</div></div>
+      <button onclick="importLegacyData()" style="width:100%;background:#E6F1FB;color:#185FA5;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer">📥 匯入舊版本地資料</button>
+      <div id="import-result" style="display:none;padding:10px;border-radius:8px;font-size:13px;width:100%"></div>
+    </div>
+  </div>
   <div class="card" style="padding:0 14px" id="income-settings"></div>
   <div class="sec-hdr">付款方式</div><div class="card" id="pay-settings" style="padding:8px 14px"></div>
   <div class="sec-hdr">固定支出</div><div class="card" id="fixed-settings" style="padding:8px 14px"></div>
@@ -743,6 +750,41 @@ function testApi(){
 }
 
 // ── Settings mutations ──
+function importLegacyData(){
+  var resultEl=document.getElementById('import-result');
+  resultEl.style.display='block';
+  // try all previous storage keys
+  var keys=['ffc51','ffc6','ffc5','ffc4','ffc3','ffc2','ffc_state'];
+  var found=null;
+  var foundKey='';
+  for(var i=0;i<keys.length;i++){
+    var raw=localStorage.getItem(keys[i]);
+    if(raw){try{var d=JSON.parse(raw);if(d&&(d.records||d.savingsCats)){found=d;foundKey=keys[i];break;}}catch(e){}}
+  }
+  if(!found){
+    resultEl.style.background='#FEF3CD';resultEl.style.color='#856404';
+    resultEl.textContent='⚠️ 找不到舊版資料，可能已清除或從未使用過舊版本。';
+    return;
+  }
+  resultEl.style.background='#f8f8f5';resultEl.style.color='#666';
+  resultEl.textContent='找到舊版資料（'+foundKey+'），合併中...';
+  // merge records
+  var oldRecs=found.records||[];
+  var oldIncome=found.monthlyIncome||{};
+  var oldSavTotals=found.savingsCats||[];
+  // merge records (avoid duplicates by id)
+  var existingIds=window.S.records.map(function(r){return r.id;});
+  var newRecs=oldRecs.filter(function(r){return existingIds.indexOf(r.id)===-1;});
+  window.S.records=window.S.records.concat(newRecs);
+  // merge monthlyIncome
+  Object.keys(oldIncome).forEach(function(k){if(!window.S.monthlyIncome[k])window.S.monthlyIncome[k]=oldIncome[k];});
+  // merge savings totals
+  oldSavTotals.forEach(function(old){var cur=window.S.savingsCats.find(function(c){return c.name===old.name;});if(cur&&old.total>0&&cur.total===0)cur.total=old.total;});
+  window.save();
+  resultEl.style.background='#D1FAE5';resultEl.style.color='#065F46';
+  resultEl.textContent='✅ 匯入完成！\n搬入 '+newRecs.length+' 筆記帳記錄\n資料已同步到雲端，請回到總覽確認。';
+}
+
 function editCycleDay(){var v=prompt('月結起始日（1–28）：',window.S.cycleDay),n=parseInt(v);if(n>=1&&n<=28){window.S.cycleDay=n;window.save();renderSettings();}}
 function editAppTitle(){var v=prompt('帳本名稱：',window.S.appTitle);if(v&&v.trim()){window.S.appTitle=v.trim();document.getElementById('app-title').textContent=window.S.appTitle;document.getElementById('app-title-val').textContent=window.S.appTitle;window.save();}}
 function editIncome(id){var m=window.S.members.find(function(x){return x.id===id;});if(!m)return;var v=prompt(m.name+' 預設底薪：',m.baseIncome),n=parseFloat(v);if(!isNaN(n)&&n>0){m.baseIncome=n;window.save();renderSettings();}}
