@@ -511,13 +511,21 @@ function renderProg(elId,cats,type){
   el.innerHTML=cats.map(function(c){
     var spent=catSpent(c.id,type);
     var pct=c.limit>0?Math.min(100,Math.round((spent/c.limit)*100)):0;
-    var cls=pct<70?'fok':pct<100?'fwarn':'fover';
-    var col=pct>=100?'#A32D2D':pct>=70?'#BA7517':'#534AB7';
-    // 五階段提醒顏色
-    var alertIcon='';
-    if(pct>=100) alertIcon=' 🚨';
-    else if(pct>=80) alertIcon=' ⚠️';
-    return'<div class="prog-row"><div class="prog-header"><span class="prog-name">'+c.name+alertIcon+'</span><span class="prog-amounts">'+fmtMoney(spent)+' / '+fmtMoney(c.limit)+' <span style="color:'+col+'">'+pct+'%</span></span></div><div class="prog-bar"><div class="prog-fill '+cls+'" style="width:'+pct+'%"></div></div></div>';
+    var isFixed=(type==='fixed'||type==='sub');
+    var cls,col,alertIcon='';
+    if(isFixed){
+      // 固定支出 & 訂閱費：綠色邏輯
+      if(pct>=100){cls='fok';col='#0F6E56';alertIcon=' ✅';}
+      else if(pct>=50){cls='fok';col='#534AB7';alertIcon='';}
+      else{cls='fok';col='#534AB7';alertIcon='';}
+    } else {
+      // 浮動支出：原本的警示邏輯
+      if(pct>=100){cls='fover';col='#A32D2D';alertIcon=' 🚨';}
+      else if(pct>=95){cls='fwarn';col='#BA7517';alertIcon=' ⚠️';}
+      else if(pct>=80){cls='fwarn';col='#BA7517';alertIcon=' 📢';}
+      else{cls='fok';col='#534AB7';alertIcon='';}
+    }
+    return'<div class="prog-row"><div class="prog-header"><span class="prog-name">'+c.name+alertIcon+'</span><span class="prog-amounts">'+fmtMoney(spent)+' / '+fmtMoney(c.limit)+' <span style="color:'+col+'">'+pct+'%</span></span></div><div class="prog-bar"><div class="prog-fill '+cls+'" style="width:'+pct+'%;'+(isFixed&&pct>=100?'background:#0F6E56':'')+'"></div></div></div>';
   }).join('');
 }
 
@@ -669,14 +677,18 @@ function checkAlert(type,catId,newAmt){
   var cat=cats.find(function(c){return c.id===catId;});if(!cat||!cat.limit)return;
   var spent=catSpent(catId,type);
   var pct=Math.round((spent/cat.limit)*100);
-  var msg='';
-  if(pct>=100) msg='🚨 超支警告！\n「'+cat.name+'」本月已超支\n已花：'+fmtMoney(spent)+' / 限額：'+fmtMoney(cat.limit);
-  else if(pct>=95) msg='⚠️ 即將超支！\n「'+cat.name+'」已使用 '+pct+'%\n剩餘：'+fmtMoney(cat.limit-spent);
-  else if(pct>=80) msg='📢 注意預算！\n「'+cat.name+'」已使用 '+pct+'%\n剩餘：'+fmtMoney(cat.limit-spent);
-  else if(pct>=50&&pct<60) msg='✅ 預算進度正常\n「'+cat.name+'」已使用 '+pct+'%';
+  var isFixed=(type==='fixed'||type==='sub');
+  var msg='',bg='#1a1a1a';
+  if(isFixed){
+    if(pct>=100){msg='✅ 已繳清！\n「'+cat.name+'」本月已完成';bg='#0F6E56';}
+  } else {
+    if(pct>=100){msg='🚨 超支警告！\n「'+cat.name+'」本月已超支\n已花：'+fmtMoney(spent)+' / 限額：'+fmtMoney(cat.limit);bg='#A32D2D';}
+    else if(pct>=95){msg='⚠️ 即將超支！\n「'+cat.name+'」已使用 '+pct+'%\n剩餘：'+fmtMoney(cat.limit-spent);bg='#BA7517';}
+    else if(pct>=80){msg='📢 注意預算！\n「'+cat.name+'」已使用 '+pct+'%\n剩餘：'+fmtMoney(cat.limit-spent);bg='#534AB7';}
+  }
   if(msg){
     var toast=document.createElement('div');
-    toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;z-index:500;max-width:320px;text-align:center;white-space:pre-line;line-height:1.5';
+    toast.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:'+bg+';color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;z-index:500;max-width:320px;text-align:center;white-space:pre-line;line-height:1.5';
     toast.textContent=msg;
     document.body.appendChild(toast);
     setTimeout(function(){toast.remove();},4000);
