@@ -1,0 +1,20 @@
+{
+  "name": "家庭財務中心",
+  "short_name": "家庭財務",
+  "start_url": "/family-finance/",
+  "display": "standalone",
+  "background_color": "#7A9BB5",
+  "theme_color": "#B5622A",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
