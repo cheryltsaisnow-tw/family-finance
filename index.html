@@ -719,11 +719,11 @@ function checkAlert(type,catId,newAmt){
   var isFixed=(type==='fixed'||type==='sub');
   var msg='',bg='#1a1a1a';
   if(isFixed){
-    if(pct>=100){msg='✅ 已繳清！\n「'+cat.name+'」本月已完成';bg='#0F6E56';}
+          if(pct>=100){msg='✅ 已繳清！\n「'+cat.name+'」本月已完成';bg='#2B4532';}
   } else {
-    if(pct>=100){msg='🚨 超支警告！\n「'+cat.name+'」本月已超支\n已花：'+fmtMoney(spent)+' / 限額：'+fmtMoney(cat.limit);bg='#A32D2D';}
-    else if(pct>=95){msg='⚠️ 即將超支！\n「'+cat.name+'」已使用 '+pct+'%\n剩餘：'+fmtMoney(cat.limit-spent);bg='#BA7517';}
-    else if(pct>=80){msg='📢 注意預算！\n「'+cat.name+'」已使用 '+pct+'%\n剩餘：'+fmtMoney(cat.limit-spent);bg='#534AB7';}
+    if(pct>=100){msg='🚨 超支警告！\n「'+cat.name+'」本月已超支\n已花：'+fmtMoney(spent)+' / 限額：'+fmtMoney(cat.limit);bg='#8B1A1A';}
+    else if(pct>=95){msg='⚠️ 即將超支！\n「'+cat.name+'」已使用 '+pct+'%\n剩餘：'+fmtMoney(cat.limit-spent);bg='#8B4513';}
+    else if(pct>=80){msg='📢 注意預算！\n「'+cat.name+'」已使用 '+pct+'%\n剩餘：'+fmtMoney(cat.limit-spent);bg='#B5622A';}
   }
   if(msg){
     var toast=document.createElement('div');
@@ -750,7 +750,7 @@ function manualPrice(sym){
   var cur=window.S.prices[sym]?window.S.prices[sym].price:'';
   var modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;display:flex;align-items:flex-end;justify-content:center;touch-action:pan-y';
-  modal.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:480px;touch-action:pan-y"><div style="font-size:16px;font-weight:500;margin-bottom:16px">手動輸入 '+sym+' 收盤價</div><input id="manual-price-input" type="number" value="'+cur+'" placeholder="輸入今日收盤價" style="width:100%;padding:12px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;font-size:18px;text-align:right;margin-bottom:16px"><div style="display:flex;gap:8px"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;font-size:15px;background:none;cursor:pointer">取消</button><button onclick="confirmManualPrice(\''+sym+'\',this)" style="flex:1;padding:12px;background:#534AB7;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:500">確認</button></div></div>';
+  modal.innerHTML='<div style="background:#FDF9F3;border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:480px;touch-action:pan-y"><div style="font-size:16px;font-weight:600;color:#3C2415;margin-bottom:16px">手動輸入 '+sym+' 收盤價</div><input id="manual-price-input" type="number" value="'+cur+'" placeholder="輸入今日收盤價" style="width:100%;padding:12px;border:0.5px solid rgba(60,36,21,0.2);border-radius:8px;font-size:18px;text-align:right;margin-bottom:16px;background:#FDF9F3;color:#3C2415"><div style="display:flex;gap:8px"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px;border:0.5px solid rgba(60,36,21,0.2);border-radius:8px;font-size:15px;background:none;cursor:pointer;color:#7A6355">取消</button><button onclick="confirmManualPrice(\''+sym+'\',this)" style="flex:1;padding:12px;background:#B5622A;color:#FDF9F3;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600">確認</button></div></div>';
   document.body.appendChild(modal);
   setTimeout(function(){var inp=document.getElementById('manual-price-input');if(inp)inp.focus();},100);
 }
@@ -767,7 +767,7 @@ function confirmManualPrice(sym,btn){
 function fetchPrices(){
   var token=localStorage.getItem('finmind_token')||'';
   if(!token){
-    var t=document.createElement('div');t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#A32D2D;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;z-index:500';t.textContent='請先到設定頁填入 Finmind Token';document.body.appendChild(t);setTimeout(function(){t.remove();},3000);return;
+    var t=document.createElement('div');t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#8B1A1A;color:#FDF9F3;padding:12px 20px;border-radius:12px;font-size:14px;z-index:500';t.textContent='請先到設定頁填入 Finmind Token';document.body.appendChild(t);setTimeout(function(){t.remove();},3000);return;
   }
   var symbols=['0050','2330','00646'];
   document.getElementById('inv-last-update').textContent='更新中...';
