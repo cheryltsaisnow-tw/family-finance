@@ -264,6 +264,7 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
       <div><div class="slabel">匯入舊版資料</div><div class="ssub">把之前存在本機的記帳記錄搬到雲端</div></div>
       <button onclick="importLegacyData()" style="width:100%;background:#E6F1FB;color:#185FA5;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer">📥 匯入舊版本地資料</button>
       <div id="import-result" style="display:none;padding:10px;border-radius:8px;font-size:13px;width:100%"></div>
+      <div style="font-size:12px;color:#888;padding-top:4px">最後雲端同步：<span id="last-sync-time">—</span></div>
     </div>
   </div>
   <div class="card" style="padding:0 14px" id="income-settings"></div>
@@ -435,10 +436,14 @@ onSnapshot(docRef, function(snap) {
 
 window.save = function() {
   isSaving = true;
+  var now = new Date().toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   localStorage.setItem('ffc_offline', JSON.stringify(window.S));
+  localStorage.setItem('ffc_last_sync', now);
   setDoc(docRef, JSON.parse(JSON.stringify(window.S))).then(function() {
     isSaving = false;
     setSyncStatus('ok');
+    var el=document.getElementById('last-sync-time');
+    if(el) el.textContent=now;
   }).catch(function() {
     isSaving = false;
     setSyncStatus('err');
@@ -635,6 +640,9 @@ function renderSettings(){
   document.getElementById('cycle-day-val').textContent=window.S.cycleDay+'號';
   document.getElementById('app-title-val').textContent=window.S.appTitle||'家庭財務中心';
   updateTokenStatus();
+  var lastSync=localStorage.getItem('ffc_last_sync')||'尚無記錄';
+  var el=document.getElementById('last-sync-time');
+  if(el) el.textContent=lastSync;
   document.getElementById('income-settings').innerHTML=window.S.members.map(function(m){return'<div class="sitem"><div><div class="slabel">'+m.name+' 預設底薪</div><div class="ssub">發薪時可覆蓋</div></div><div style="display:flex;align-items:center;gap:6px"><span class="sval">'+fmtMoney(m.baseIncome)+'</span><button class="edit-btn" onclick="editIncome(\''+m.id+'\')">修改</button></div></div>';}).join('');
   renderPaySet();renderCatSet('fixed-settings',window.S.fixedCats,'fixed');renderCatSet('var-settings',window.S.varCats,'var');renderSubSet();renderSavSet();
 }
