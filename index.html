@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>家庭財務中心</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="家庭財務">
+<meta name="theme-color" content="#B5622A">
+<style>
+#splash{position:fixed;inset:0;background:#E8621A;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s}
+#splash.hide{opacity:0;pointer-events:none}
+#splash svg{width:80px;height:80px;margin-bottom:20px}
+#splash-title{color:#fff;font-size:22px;font-weight:600;letter-spacing:1px}
+#splash-sub{color:rgba(255,255,255,0.75);font-size:13px;margin-top:6px}
+</style>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden;touch-action:pan-y}
@@ -150,6 +163,18 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 </style>
 </head>
 <body>
+<!-- Splash Screen -->
+<div id="splash">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,10 90,45 80,45 80,85 20,85 20,45 10,45" fill="#FDF9F3" />
+    <rect x="38" y="58" width="24" height="27" fill="#B5622A"/>
+    <circle cx="72" cy="68" r="16" fill="#FDF9F3"/>
+    <text x="72" y="74" text-anchor="middle" font-size="16" font-weight="bold" fill="#B5622A">$</text>
+  </svg>
+  <div id="splash-title">家庭財務中心</div>
+  <div id="splash-sub">載入中...</div>
+</div>
+
 <div class="app">
 <div class="topbar">
   <div class="topbar-row1">
@@ -419,19 +444,25 @@ onSnapshot(docRef, function(snap) {
       refreshPaySelects();
     }
   } else {
-    // First time — write defaults
     setDoc(docRef, JSON.parse(JSON.stringify(DEF))).then(function() {
       window.dbReady = true;
       setSyncStatus('ok');
     });
   }
+  // Hide splash
+  setTimeout(function(){
+    var s=document.getElementById('splash');
+    if(s){s.classList.add('hide');setTimeout(function(){s.style.display='none';},500);}
+  }, 800);
 }, function(err) {
   setSyncStatus('err');
-  // Fallback to localStorage
   var local = localStorage.getItem('ffc_offline');
   if (local) window.S = JSON.parse(local);
   window.dbReady = true;
   refreshPage();
+  // Hide splash even on error
+  var s=document.getElementById('splash');
+  if(s){s.classList.add('hide');setTimeout(function(){s.style.display='none';},500);}
 });
 
 window.save = function() {
