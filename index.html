@@ -322,7 +322,7 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
   <h3 id="add-modal-title">新增記帳</h3>
   <div class="frow"><label>類型</label><select id="add-type" onchange="updateAddCat()"><option value="fixed">固定支出</option><option value="var">浮動支出</option><option value="sub">訂閱費</option><option value="income-extra">額外收入</option></select></div>
   <div class="frow"><label>分類</label><select id="add-cat"></select></div>
-  <div class="frow"><label>金額（元）</label><input type="number" id="add-amount" placeholder="0"></div>
+  <div class="frow"><label>金額（元）</label><input type="number" inputmode="decimal" id="add-amount" placeholder="0"></div>
   <div class="frow"><label>付款方式</label><select id="add-pay"></select></div>
   <div class="frow"><label>備註（選填）</label><input type="text" id="add-note"></div>
   <div class="frow"><label>成員</label><select id="add-member"><option value="Cheryl">Cheryl</option><option value="Jo">Jo</option><option value="共同">共同</option></select></div>
@@ -334,7 +334,7 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 <div class="mbg" id="dep-modal">
 <div class="modal">
   <h3 id="dep-title">存入基金</h3>
-  <div class="frow"><label>存入金額（元）</label><input type="number" id="dep-amount" placeholder="0"></div>
+  <div class="frow"><label>存入金額（元）</label><input type="number" inputmode="decimal" id="dep-amount" placeholder="0"></div>
   <div class="frow"><label>付款方式</label><select id="dep-pay"></select></div>
   <div class="frow"><label>成員</label><select id="dep-member"><option value="Cheryl">Cheryl</option><option value="Jo">Jo</option><option value="共同">共同</option></select></div>
   <div class="frow"><label>備註（選填）</label><input type="text" id="dep-note"></div>
@@ -348,14 +348,14 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
   <div style="font-size:13px;color:#7A6355;margin-bottom:16px" id="pday-period-label">確認本月實際收入</div>
   <div class="pday-member-block">
     <div class="pday-member-title">👩🏻 Cheryl</div>
-    <div class="income-line"><label>主業收入</label><input type="number" id="c-base" placeholder="0" oninput="updSubtotals()"></div>
-    <div class="income-line"><label>副業收入</label><input type="number" id="c-side" placeholder="0" oninput="updSubtotals()"></div>
+    <div class="income-line"><label>主業收入</label><input type="number" inputmode="decimal" id="c-base" placeholder="0" oninput="updSubtotals()"></div>
+    <div class="income-line"><label>副業收入</label><input type="number" inputmode="decimal" id="c-side" placeholder="0" oninput="updSubtotals()"></div>
     <div class="pday-subtotal">本月小計：<span id="c-subtotal">NT$0</span></div>
   </div>
   <div class="pday-member-block">
     <div class="pday-member-title">👨🏻 Jo</div>
-    <div class="income-line"><label>主業收入</label><input type="number" id="j-base" placeholder="0" oninput="updSubtotals()"></div>
-    <div class="income-line"><label>副業收入</label><input type="number" id="j-side" placeholder="0" oninput="updSubtotals()"></div>
+    <div class="income-line"><label>主業收入</label><input type="number" inputmode="decimal" id="j-base" placeholder="0" oninput="updSubtotals()"></div>
+    <div class="income-line"><label>副業收入</label><input type="number" inputmode="decimal" id="j-side" placeholder="0" oninput="updSubtotals()"></div>
     <div class="pday-subtotal">本月小計：<span id="j-subtotal">NT$0</span></div>
   </div>
   <hr class="pday-divider">
@@ -672,7 +672,7 @@ function showCele(name,amt){document.getElementById('cele-title').textContent='�
 function closeCele(){document.getElementById('cele').classList.remove('show');if(fwAnim){cancelAnimationFrame(fwAnim);fwAnim=null;}}
 function launchFW(){var cv=document.getElementById('fw'),ctx=cv.getContext('2d');cv.width=window.innerWidth;cv.height=window.innerHeight;var pts=[];for(var i=0;i<7;i++){var x=Math.random()*cv.width,y=Math.random()*cv.height*0.5,h=Math.random()*360;for(var j=0;j<45;j++){var a=Math.random()*Math.PI*2,sp=2+Math.random()*5;pts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color:'hsl('+h+',100%,60%)'});}}function draw(){ctx.clearRect(0,0,cv.width,cv.height);pts.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=0.07;p.life-=0.013;ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;if(pts.some(function(p){return p.life>0;}))fwAnim=requestAnimationFrame(draw);}draw();}
 
-function manualPrice(sym){var cur=window.S.prices[sym]?window.S.prices[sym].price:'';var modal=document.createElement('div');modal.style.cssText='position:fixed;inset:0;background:rgba(60,36,21,0.65);z-index:200;display:flex;align-items:flex-end;justify-content:center;touch-action:pan-y';modal.innerHTML='<div style="background:#FDF9F3;border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:480px"><div style="font-size:16px;font-weight:600;color:#3C2415;margin-bottom:16px">手動輸入 '+sym+' 收盤價</div><input id="manual-price-input" type="number" value="'+cur+'" placeholder="輸入今日收盤價" style="width:100%;padding:12px;border:0.5px solid rgba(60,36,21,0.2);border-radius:8px;font-size:18px;text-align:right;margin-bottom:16px;background:#FDF9F3;color:#3C2415"><div style="display:flex;gap:8px"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px;border:0.5px solid rgba(60,36,21,0.2);border-radius:8px;font-size:15px;background:none;cursor:pointer;color:#7A6355">取消</button><button onclick="confirmMP(\''+sym+'\',this)" style="flex:1;padding:12px;background:#B5622A;color:#FDF9F3;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600">確認</button></div></div>';document.body.appendChild(modal);setTimeout(function(){var inp=document.getElementById('manual-price-input');if(inp)inp.focus();},100);}
+function manualPrice(sym){var cur=window.S.prices[sym]?window.S.prices[sym].price:'';var modal=document.createElement('div');modal.style.cssText='position:fixed;inset:0;background:rgba(60,36,21,0.65);z-index:200;display:flex;align-items:flex-end;justify-content:center;touch-action:pan-y';modal.innerHTML='<div style="background:#FDF9F3;border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:480px"><div style="font-size:16px;font-weight:600;color:#3C2415;margin-bottom:16px">手動輸入 '+sym+' 收盤價</div><input id="manual-price-input" type="number" inputmode="decimal" value="'+cur+'" placeholder="輸入今日收盤價" style="width:100%;padding:12px;border:0.5px solid rgba(60,36,21,0.2);border-radius:8px;font-size:18px;text-align:right;margin-bottom:16px;background:#FDF9F3;color:#3C2415"><div style="display:flex;gap:8px"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="flex:1;padding:12px;border:0.5px solid rgba(60,36,21,0.2);border-radius:8px;font-size:15px;background:none;cursor:pointer;color:#7A6355">取消</button><button onclick="confirmMP(\''+sym+'\',this)" style="flex:1;padding:12px;background:#B5622A;color:#FDF9F3;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600">確認</button></div></div>';document.body.appendChild(modal);setTimeout(function(){var inp=document.getElementById('manual-price-input');if(inp)inp.focus();},100);}
 function confirmMP(sym,btn){var val=parseFloat(document.getElementById('manual-price-input').value)||0;if(!val)return;var today=new Date().toISOString().slice(0,10);window.S.prices[sym]={price:val,updatedAt:today+' 手動'};window.save();btn.closest('div[style*="fixed"]').remove();renderSavings();if(curPage==='analysis')renderAnalysis();}
 
 function fetchPrices(){var token=localStorage.getItem('finmind_token')||'';if(!token){var t=document.createElement('div');t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#8B1A1A;color:#FDF9F3;padding:12px 20px;border-radius:12px;font-size:14px;z-index:500';t.textContent='請先到設定頁填入 Finmind Token';document.body.appendChild(t);setTimeout(function(){t.remove();},3000);return;}var symbols=['0050','2330','00646'];document.getElementById('inv-last-update').textContent='更新中...';var start=new Date();start.setDate(start.getDate()-5);var sd=start.toISOString().slice(0,10);var done=0;symbols.forEach(function(sym){var url='https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id='+sym+'&start_date='+sd+'&token='+token;fetch(url).then(function(r){return r.json();}).then(function(data){try{var arr=data.data;if(arr&&arr.length>0){var last=arr[arr.length-1];var price=parseFloat(last.close)||0;if(price>0)window.S.prices[sym]={price:price,updatedAt:last.date+' 收盤'};}}catch(e){}done++;if(done===symbols.length){window.save();renderSavings();if(curPage==='analysis')renderAnalysis();}}).catch(function(){done++;if(done===symbols.length)renderSavings();});});}
