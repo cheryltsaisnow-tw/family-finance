@@ -515,8 +515,8 @@ function updateTopbar(){
   document.getElementById('log-period-hdr').textContent=fmtMon(p.start)+' 記帳記錄';
   var key=getPeriodKey();var mi=window.S.monthlyIncome[key];
   var btn=document.getElementById('payday-main-btn');
-  if(mi&&mi.confirmed){btn.textContent='✅ 收入已確認';btn.style.background='#0F6E56';}
-  else{btn.textContent='💰 發薪了！';btn.style.background='#534AB7';}
+  if(mi&&mi.confirmed){btn.textContent='✅ 收入已確認';btn.style.background='#2B4532';}
+  else{btn.textContent='💰 發薪了！';btn.style.background='#B5622A';}
 }
 
 function renderHome(){
@@ -551,9 +551,9 @@ function renderProg(elId,cats,type){
     var cls,col,alertIcon='';
     if(isFixed){
       // 固定支出 & 訂閱費：綠色邏輯
-      if(pct>=100){cls='fok';col='#0F6E56';alertIcon=' ✅';}
-      else if(pct>=50){cls='fok';col='#534AB7';alertIcon='';}
-      else{cls='fok';col='#534AB7';alertIcon='';}
+      if(pct>=100){cls='fok';col='#2B4532';alertIcon=' ✅';}
+      else if(pct>=50){cls='fok';col='#B5622A';alertIcon='';}
+      else{cls='fok';col='#B5622A';alertIcon='';}
     } else {
       // 浮動支出：原本的警示邏輯
       if(pct>=100){cls='fover';col='#A32D2D';alertIcon=' 🚨';}
@@ -574,7 +574,7 @@ function logHTML(r,showAct){
   var ac=r.type==='income-extra'?'cg':r.type==='savings'?'cb':'cr';
   var sign=r.type==='income-extra'?'+':'-';
   var pn=getPayName(r.payId);
-  var acts=showAct?'<button class="log-act" style="color:#534AB7;font-size:13px" onclick="editRecord(\''+r.id+'\')">✎</button><button class="log-act" style="color:#A32D2D" onclick="delRecord(\''+r.id+'\')">×</button>':'';
+  var acts=showAct?'<button class="log-act" style="color:#B5622A;font-size:13px" onclick="editRecord(\''+r.id+'\')">✎</button><button class="log-act" style="color:#8B1A1A" onclick="delRecord(\''+r.id+'\')">×</button>':'';
   return'<div class="log-item"><div class="log-left"><div class="log-name">'+getCatName(r)+(r.note?'<span style="font-weight:400;color:#888;font-size:11px"> · '+r.note+'</span>':'')+'<span class="badge '+bc+'">'+r.member+'</span>'+(pn?'<span class="pay-badge">'+pn+'</span>':'')+'</div><div class="log-meta">'+typeLabel(r.type)+' · '+r.date+'</div></div><div class="log-right"><span class="log-amt '+ac+'">'+sign+fmtMoney(r.amount)+'</span>'+acts+'</div></div>';
 }
 function renderRecentLog(){var recs=[].concat(getPeriodRecords()).sort(function(a,b){return new Date(b.date)-new Date(a.date);}).slice(0,6);document.getElementById('recent-log').innerHTML=recs.length?recs.map(function(r){return logHTML(r,false);}).join(''):'<div style="color:#888;font-size:14px;padding:14px 0;text-align:center">還沒有記帳記錄</div>';}
