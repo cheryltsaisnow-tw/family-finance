@@ -520,7 +520,11 @@ function renderProg(elId,cats,type){
   if(!cats||!cats.length){el.innerHTML='<div style="font-size:13px;color:#7A6355;padding:4px 0">暫無項目</div>';return;}
   el.innerHTML=cats.map(function(c){
     var spent=catSpent(c.id,type);
-    var pct=c.limit>0?Math.min(100,Math.round((spent/c.limit)*100)):0;
+    // 預算為0：彈性模式，只顯示金額
+    if(!c.limit||c.limit===0){
+      return'<div class="prog-row"><div class="prog-header"><span class="prog-name">'+c.name+'</span><span class="prog-amounts">'+fmtMoney(spent)+' <span style="color:#7A6355;font-size:11px">（彈性）</span></span></div></div>';
+    }
+    var pct=Math.min(100,Math.round((spent/c.limit)*100));
     var isFixed=(type==='fixed'||type==='sub');
     var cls,col,alertIcon='';
     if(isFixed){
