@@ -244,11 +244,15 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
   <div class="sec-hdr">日期區間</div>
   <div class="card">
     <div class="range-bar">
+      <button class="range-chip" onclick="setQuick('day',this)">日</button>
       <button class="range-chip" onclick="setQuick('week',this)">本週</button>
       <button class="range-chip active" onclick="setQuick('month',this)">本月</button>
       <button class="range-chip" onclick="setQuick('quarter',this)">本季</button>
       <button class="range-chip" onclick="setQuick('year',this)">今年</button>
       <button class="range-chip" onclick="setQuick('custom',this)">自訂</button>
+    </div>
+    <div id="day-picker" style="display:none;margin-bottom:8px">
+      <input type="date" id="an-day" style="width:100%;padding:8px 10px;border:0.5px solid rgba(60,36,21,0.25);border-radius:8px;font-size:14px;background:#FDF9F3;color:#3C2415" onchange="applyDayPicker()">
     </div>
     <div id="custom-range" style="display:none">
       <div class="date-inputs"><input type="date" id="an-start"><span style="color:#7A6355;flex-shrink:0">至</span><input type="date" id="an-end"><button class="apply-btn" onclick="applyCustomRange()">套用</button></div>
@@ -598,15 +602,80 @@ function renderSavings(){
 }
 function togHist(id,btn){var el=document.getElementById(id);el.classList.toggle('open');btn.textContent=el.classList.contains('open')?'▾ 收起':'▸ 存款記錄';}
 
-function getAnRange(){var now=new Date();if(anMode==='custom'&&anStart&&anEnd)return{s:new Date(anStart),e:new Date(anEnd)};if(anMode==='week'){var s=new Date(now);s.setDate(now.getDate()-now.getDay()+1);var e=new Date(s);e.setDate(s.getDate()+6);return{s:s,e:e};}if(anMode==='month'){var p=getPPO(0);return{s:p.start,e:p.end};}if(anMode==='quarter'){var q=Math.floor(now.getMonth()/3);return{s:new Date(now.getFullYear(),q*3,1),e:new Date(now.getFullYear(),q*3+3,0)};}return{s:new Date(now.getFullYear(),0,1),e:new Date(now.getFullYear(),11,31)};}
-function setQuick(mode,btn){anMode=mode;document.querySelectorAll('.range-chip').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');document.getElementById('custom-range').style.display=mode==='custom'?'block':'none';if(mode!=='custom')renderAnalysis();}
+function getAnRange(){
+  var now=new Date();
+  if(anMode==='day'){
+    var dv=document.getElementById('an-day').value;
+    if(!dv)dv=now.toISOString().slice(0,10);
+    var s=new Date(dv),e=new Date(dv);e.setHours(23,59,59);
+    return{s:s,e:e};
+  }
+  if(anMode==='custom'&&anStart&&anEnd)return{s:new Date(anStart),e:new Date(anEnd)};
+  if(anMode==='week'){var s=new Date(now);s.setDate(now.getDate()-now.getDay()+1);var e=new Date(s);e.setDate(s.getDate()+6);return{s:s,e:e};}
+  if(anMode==='month'){var p=getPPO(0);return{s:p.start,e:p.end};}
+  if(anMode==='quarter'){var q=Math.floor(now.getMonth()/3);return{s:new Date(now.getFullYear(),q*3,1),e:new Date(now.getFullYear(),q*3+3,0)};}
+  return{s:new Date(now.getFullYear(),0,1),e:new Date(now.getFullYear(),11,31)};
+}
+
+function setQuick(mode,btn){
+  anMode=mode;
+  document.querySelectorAll('.range-chip').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('day-picker').style.display=mode==='day'?'block':'none';
+  document.getElementById('custom-range').style.display=mode==='custom'?'block':'none';
+  if(mode==='day'){
+    var inp=document.getElementById('an-day');
+    if(!inp.value)inp.value=new Date().toISOString().slice(0,10);
+    renderAnalysis();
+  } else if(mode!=='custom'){
+    renderAnalysis();
+  }
+}
+
+function applyDayPicker(){renderAnalysis();}
 function applyCustomRange(){anStart=document.getElementById('an-start').value;anEnd=document.getElementById('an-end').value;if(anStart&&anEnd)renderAnalysis();}
 function buildSegs(s,e){var diff=Math.round((e-s)/86400000),segs=[];if(diff<=14){var step=Math.max(1,Math.floor(diff/6));for(var d=new Date(s);d<=e;){var se=new Date(d);se.setDate(se.getDate()+step-1);if(se>e)se.setTime(e.getTime());segs.push({s:new Date(d),e:new Date(se),lbl:(d.getMonth()+1)+'/'+(d.getDate())});d.setDate(d.getDate()+step);}}else if(diff<=93){var cur=new Date(s);while(cur<=e){var ws=new Date(cur),we=new Date(cur);we.setDate(we.getDate()+6);if(we>e)we.setTime(e.getTime());segs.push({s:ws,e:we,lbl:(ws.getMonth()+1)+'/'+(ws.getDate())});cur.setDate(cur.getDate()+7);}}else{var cy=s.getFullYear(),cm=s.getMonth();while(true){var ms=new Date(cy,cm,1),me=new Date(cy,cm+1,0);var rs=ms<s?s:ms,re=me>e?e:me;segs.push({s:rs,e:re,lbl:(cm+1)+'月'});if(cm===e.getMonth()&&cy===e.getFullYear())break;cm++;if(cm>11){cm=0;cy++;}}}return segs.slice(0,12);}
 
 function renderAnalysis(){
   var r=getAnRange();
-  document.getElementById('an-range-label').textContent='查看區間：'+r.s.getFullYear()+'年 '+fmtDS(r.s)+' — '+fmtDS(r.e);
+  var dateLabel=anMode==='day'?(document.getElementById('an-day').value||new Date().toISOString().slice(0,10)):r.s.getFullYear()+'年 '+fmtDS(r.s)+' — '+fmtDS(r.e);
+  document.getElementById('an-range-label').textContent='查看區間：'+dateLabel;
   var recs=getRIR(r.s,r.e);
+
+  // 單日模式：條列消費明細
+  if(anMode==='day'){
+    var expRecs=recs.filter(function(r){return['fixed','var','sub'].indexOf(r.type)>=0;});
+    var total=expRecs.reduce(function(a,r){return a+r.amount;},0);
+    var dayHTML=expRecs.length?
+      '<div style="font-size:13px;color:#7A6355;margin-bottom:10px">共 '+expRecs.length+' 筆 · 合計 <span style="color:#8B1A1A;font-weight:600">'+fmtMoney(total)+'</span></div>'+
+      expRecs.map(function(r){
+        var bc=r.member==='Jo'?'bj':r.member==='共同'?'bs':'bc';
+        var pn=getPN(r.payId);
+        return'<div class="log-item"><div class="log-left"><div class="log-name">'+getCN(r)+(r.note?'<span style="font-weight:400;color:#7A6355;font-size:11px"> · '+r.note+'</span>':'')+'<span class="badge '+bc+'">'+r.member+'</span>'+(pn?'<span class="pay-badge">'+pn+'</span>':'')+'</div><div class="log-meta">'+tl(r.type)+'</div></div><div class="log-right"><span class="log-amt cr">－'+fmtMoney(r.amount)+'</span></div></div>';
+      }).join('')
+      :'<div style="font-size:14px;color:#7A6355;padding:16px 0;text-align:center">這天沒有消費記錄 ✨</div>';
+    document.getElementById('trend-chart').parentElement.parentElement.style.display='none';
+    document.getElementById('cat-breakdown').parentElement.style.display='none';
+    document.getElementById('pay-breakdown').parentElement.style.display='none';
+    document.getElementById('an-invest').parentElement.style.display='none';
+    document.getElementById('yearly-summary').parentElement.style.display='none';
+    // 用 trend-chart 區塊來顯示日報
+    var tc=document.getElementById('trend-chart').parentElement.parentElement;
+    tc.style.display='block';
+    tc.innerHTML='<div style="padding:4px 0">'+dayHTML+'</div>';
+    // 隱藏其他 sec-hdr
+    var hdrs=document.querySelectorAll('#pg-analysis .sec-hdr');
+    hdrs.forEach(function(h,i){h.style.display=i===0?'block':'none';});
+    return;
+  }
+
+  // 恢復所有區塊
+  var hdrs=document.querySelectorAll('#pg-analysis .sec-hdr');
+  hdrs.forEach(function(h){h.style.display='block';});
+  document.getElementById('cat-breakdown').parentElement.style.display='block';
+  document.getElementById('pay-breakdown').parentElement.style.display='block';
+  document.getElementById('an-invest').parentElement.style.display='block';
+  document.getElementById('yearly-summary').parentElement.style.display='block';
   var colors={fixed:'#B5622A',var:'#2B4532',sub:'#8B1A1A'};
   var segs=buildSegs(r.s,r.e);
   var sd=segs.map(function(sg){var sr=getRIR(sg.s,sg.e);var fx=sr.filter(function(r){return r.type==='fixed';}).reduce(function(a,r){return a+r.amount;},0);var vr=sr.filter(function(r){return r.type==='var';}).reduce(function(a,r){return a+r.amount;},0);var sb=sr.filter(function(r){return r.type==='sub';}).reduce(function(a,r){return a+r.amount;},0);return{lbl:sg.lbl,fixed:fx,var:vr,sub:sb,total:fx+vr+sb};});
