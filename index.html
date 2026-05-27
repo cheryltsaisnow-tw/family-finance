@@ -11,8 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="家庭財務">
 <meta name="theme-color" content="#7A9BB5">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-input[type="date"]{max-width:100%;}
+*{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden;touch-action:pan-y}
 body{font-family:system-ui,-apple-system,sans-serif;background:#F7F3E3;color:#3C2415;font-size:15px;overflow-x:hidden;touch-action:pan-y;max-width:100vw}
 .app{max-width:480px;margin:0 auto;padding-bottom:80px}
@@ -29,7 +28,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#F7F3E3;color:#3C
 .nav-item.active{color:#B5622A}
 .nav-icon{font-size:17px;line-height:1}
 .page{display:none}.page.active{display:block}
-.card{background:#FDF9F3;border-radius:12px;border:0.5px solid rgba(60,36,21,0.12);padding:16px;margin:10px 14px 0;overflow:hidden}
+.card{background:#FDF9F3;border-radius:12px;border:0.5px solid rgba(60,36,21,0.12);padding:16px;margin:10px 14px 0}
 .card-title{font-size:13px;color:#7A6355;margin-bottom:10px}
 .sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px 0}
 .metric{background:#EDE8DA;border-radius:8px;padding:11px 12px}
@@ -151,6 +150,21 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#F7F3E3;color:#3C
 .cele-title{font-size:19px;font-weight:600;color:#3C2415;margin-bottom:5px}
 .cele-sub{font-size:13px;color:#7A6355;margin-bottom:18px}
 canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:299}
+.week-cal{background:#FDF9F3;border-radius:12px;border:0.5px solid rgba(60,36,21,0.12);margin:10px 14px 0;overflow:hidden;touch-action:pan-y}
+.week-cal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px}
+.week-cal-range{font-size:12px;color:#7A6355;font-weight:500}
+.week-days-row{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:0 6px 4px}
+.week-day-label{font-size:10px;color:#7A6355;padding:2px 0}
+.week-dates-row{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:0 6px 10px;gap:2px}
+.week-date-cell{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 2px;border-radius:8px;transition:background 0.15s}
+.week-date-cell:active{background:#EDE8DA}
+.week-date-num{font-size:15px;font-weight:500;color:#3C2415;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.week-date-cell.today .week-date-num{background:#EDE8DA;color:#B5622A;font-weight:700}
+.week-date-cell.selected .week-date-num{background:#B5622A;color:#FDF9F3;font-weight:700}
+.week-date-cell.other-month .week-date-num{color:#C8BFB0}
+.week-dot{width:5px;height:5px;border-radius:50%;background:#B5622A;opacity:0}
+.week-date-cell.has-record .week-dot{opacity:1}
+.week-date-cell.selected .week-dot{background:#FDF9F3}
 .sync-indicator{font-size:11px;padding:2px 8px;border-radius:10px;margin-left:8px}
 .sync-ok{background:#C8D8C0;color:#2B4532}
 .sync-err{background:#DDB8B8;color:#8B1A1A}
@@ -211,7 +225,21 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 </div>
 
 <div id="pg-log" class="page">
-  <div class="card" style="padding:10px 14px;margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+  <!-- 週曆 -->
+  <div class="week-cal" id="week-cal">
+    <div class="week-cal-header">
+      <span class="week-cal-range" id="week-cal-range"></span>
+      <span style="font-size:11px;color:#B5622A" id="week-selected-date"></span>
+    </div>
+    <div class="week-days-row">
+      <div class="week-day-label">一</div><div class="week-day-label">二</div><div class="week-day-label">三</div>
+      <div class="week-day-label">四</div><div class="week-day-label">五</div>
+      <div class="week-day-label" style="color:#B5622A">六</div><div class="week-day-label" style="color:#B5622A">日</div>
+    </div>
+    <div class="week-dates-row" id="week-dates-row"></div>
+  </div>
+  <!-- 篩選器 -->
+  <div class="card" style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap">
     <select id="log-filter" onchange="renderAllLog()" style="flex:1;min-width:110px;padding:7px 10px;border:0.5px solid rgba(60,36,21,0.2);border-radius:8px;font-size:14px;background:#FDF9F3;color:#3C2415">
       <option value="all">全部類型</option><option value="fixed">固定支出</option><option value="var">浮動支出</option><option value="sub">訂閱費</option><option value="income-extra">額外收入</option><option value="savings">基金存款</option>
     </select>
@@ -245,15 +273,11 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
   <div class="sec-hdr">日期區間</div>
   <div class="card">
     <div class="range-bar">
-      <button class="range-chip" id="chip-day" onclick="setQuick('day',this)">日</button>
       <button class="range-chip" onclick="setQuick('week',this)">本週</button>
       <button class="range-chip active" onclick="setQuick('month',this)">本月</button>
       <button class="range-chip" onclick="setQuick('quarter',this)">本季</button>
       <button class="range-chip" onclick="setQuick('year',this)">今年</button>
       <button class="range-chip" onclick="setQuick('custom',this)">自訂</button>
-    </div>
-    <div id="day-picker" style="display:none;margin-bottom:8px">
-      <input type="date" id="an-day" onchange="renderAnalysis()" style="display:block;width:100%;max-width:100%;box-sizing:border-box;padding:8px 10px;border:0.5px solid rgba(60,36,21,0.25);border-radius:8px;font-size:14px;background:#FDF9F3;color:#3C2415">
     </div>
     <div id="custom-range" style="display:none">
       <div class="date-inputs"><input type="date" id="an-start"><span style="color:#7A6355;flex-shrink:0">至</span><input type="date" id="an-end"><button class="apply-btn" onclick="applyCustomRange()">套用</button></div>
@@ -433,6 +457,7 @@ onSnapshot(docRef, function(snap) {
       document.getElementById('app-title').textContent = window.S.appTitle || '家庭財務中心';
       updateTokenStatus();
       refreshPaySelects();
+      initWeekCalSwipe();
     }
   } else {
     setDoc(docRef, JSON.parse(JSON.stringify(DEF))).then(function() {
@@ -614,11 +639,105 @@ function renderRecentLog() {
 function renderAllLog() {
   updateTopbar();
   var tf=document.getElementById('log-filter').value, mf=document.getElementById('log-member-filter').value, pf=document.getElementById('log-pay-filter').value;
-  var recs = [].concat(getPR()).sort(function(a,b) { return new Date(b.date)-new Date(a.date); });
-  if (tf!=='all') recs = recs.filter(function(r) { return r.type===tf; });
-  if (mf!=='all') recs = recs.filter(function(r) { return r.member===mf; });
-  if (pf!=='all') recs = recs.filter(function(r) { return r.payId===pf; });
-  document.getElementById('all-log').innerHTML = recs.length ? recs.map(function(r) { return logHTML(r,true); }).join('') : '<div style="color:#7A6355;font-size:14px;padding:14px 0;text-align:center">此條件無記錄</div>';
+  var recs;
+  if (calSelectedDate) {
+    // 有選日期：只顯示那天，不受月份 viewOffset 限制
+    var ds = new Date(calSelectedDate+'T00:00:00'), de = new Date(calSelectedDate+'T23:59:59');
+    recs = getRIR(ds, de).sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    document.getElementById('log-period-hdr').textContent = calSelectedDate + ' 的記帳';
+  } else {
+    recs = [].concat(getPR()).sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    var p=getPPO(viewOffset);
+    document.getElementById('log-period-hdr').textContent = fmtMon(p.start) + ' 記帳記錄';
+  }
+  if (tf!=='all') recs = recs.filter(function(r){return r.type===tf;});
+  if (mf!=='all') recs = recs.filter(function(r){return r.member===mf;});
+  if (pf!=='all') recs = recs.filter(function(r){return r.payId===pf;});
+  document.getElementById('all-log').innerHTML = recs.length ? recs.map(function(r){return logHTML(r,true);}).join('') : '<div style="color:#7A6355;font-size:14px;padding:14px 0;text-align:center">此條件無記錄</div>';
+}
+
+// ── 週曆 ──────────────────────────────────────────
+var calWeekOffset = 0;   // 相對於「今天所在週」的週偏移
+var calSelectedDate = null;  // 'YYYY-MM-DD' or null
+
+function getWeekStart(offset) {
+  var now = new Date();
+  var day = now.getDay(); // 0=日
+  var monday = new Date(now);
+  monday.setDate(now.getDate() - (day===0 ? 6 : day-1) + offset*7);
+  monday.setHours(0,0,0,0);
+  return monday;
+}
+
+function dateStr(d) {
+  return d.getFullYear()+'-'+(d.getMonth()<9?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate();
+}
+
+function renderWeekCal() {
+  var ws = getWeekStart(calWeekOffset);
+  var we = new Date(ws); we.setDate(ws.getDate()+6);
+  var todayStr = dateStr(new Date());
+
+  // header range label
+  var fmt = function(d){ return (d.getMonth()+1)+'/'+(d.getDate()); };
+  document.getElementById('week-cal-range').textContent = fmt(ws)+' — '+fmt(we);
+
+  // 哪些日期有記帳（全部 records，不限月份）
+  var hasRec = {};
+  window.S.records.forEach(function(r){ hasRec[r.date] = true; });
+
+  var html = '';
+  for (var i=0; i<7; i++) {
+    var d = new Date(ws); d.setDate(ws.getDate()+i);
+    var ds = dateStr(d);
+    var cls = 'week-date-cell';
+    if (ds === todayStr) cls += ' today';
+    if (ds === calSelectedDate) cls += ' selected';
+    if (d.getMonth() !== new Date().getMonth() + calWeekOffset) {} // 不特別灰掉
+    if (hasRec[ds]) cls += ' has-record';
+    html += '<div class="'+cls+'" onclick="selectCalDate(\''+ds+'\')">'
+          + '<div class="week-date-num">'+d.getDate()+'</div>'
+          + '<div class="week-dot"></div>'
+          + '</div>';
+  }
+  document.getElementById('week-dates-row').innerHTML = html;
+
+  // 右上角顯示已選日期
+  var selEl = document.getElementById('week-selected-date');
+  selEl.textContent = calSelectedDate ? calSelectedDate+' ✕' : '';
+  selEl.onclick = calSelectedDate ? function(){ selectCalDate(null); } : null;
+  selEl.style.cursor = calSelectedDate ? 'pointer' : 'default';
+}
+
+function selectCalDate(ds) {
+  if (calSelectedDate === ds) {
+    calSelectedDate = null;
+  } else {
+    calSelectedDate = ds;
+    // 如果選的日期跟目前 viewOffset 的月份不同，調整 viewOffset
+    if (ds) {
+      var selDate = new Date(ds);
+      var p = getPPO(viewOffset);
+      // 若選日超出目前月份週期，不強制跳月，讓清單直接顯示
+    }
+  }
+  renderWeekCal();
+  renderAllLog();
+}
+
+function initWeekCalSwipe() {
+  var el = document.getElementById('week-cal');
+  var startX = 0, moved = false;
+  el.addEventListener('touchstart', function(e){ startX=e.touches[0].clientX; moved=false; }, {passive:true});
+  el.addEventListener('touchmove', function(e){ if(Math.abs(e.touches[0].clientX-startX)>10) moved=true; }, {passive:true});
+  el.addEventListener('touchend', function(e){
+    if (!moved) return;
+    var dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 40) {
+      calWeekOffset += dx < 0 ? 1 : -1;
+      renderWeekCal();
+    }
+  }, {passive:true});
 }
 
 function refreshPayFilter() {
@@ -704,15 +823,8 @@ function setQuick(mode, btn) {
   anMode = mode;
   document.querySelectorAll('.range-chip').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
-  document.getElementById('day-picker').style.display = mode==='day' ? 'block' : 'none';
   document.getElementById('custom-range').style.display = mode==='custom' ? 'block' : 'none';
-  if (mode==='day') {
-    var inp = document.getElementById('an-day');
-    if (!inp.value) inp.value = new Date().toISOString().slice(0,10);
-    renderAnalysis();
-  } else if (mode!=='custom') {
-    renderAnalysis();
-  }
+  if (mode!=='custom') renderAnalysis();
 }
 
 function applyCustomRange() {
@@ -723,10 +835,6 @@ function applyCustomRange() {
 
 function getAnRange() {
   var now = new Date();
-  if (anMode==='day') {
-    var dv = document.getElementById('an-day').value || now.toISOString().slice(0,10);
-    return {s:new Date(dv+'T00:00:00'), e:new Date(dv+'T23:59:59')};
-  }
   if (anMode==='custom' && anStart && anEnd) return {s:new Date(anStart), e:new Date(anEnd)};
   if (anMode==='week') {
     var s=new Date(now); s.setDate(now.getDate()-now.getDay()+1);
@@ -776,31 +884,6 @@ function buildSegs(s, e) {
 function renderAnalysis() {
   var r = getAnRange();
   var anHdrs = ['an-hdr-trend','an-hdr-cat','an-hdr-pay','an-hdr-inv','an-hdr-year'];
-  var anCards = ['an-trend-card','cat-breakdown','pay-breakdown','an-invest','yearly-summary'];
-
-  if (anMode==='day') {
-    var dv = document.getElementById('an-day').value || new Date().toISOString().slice(0,10);
-    document.getElementById('an-range-label').textContent = '查看日期：' + dv;
-    var dayRecs = getRIR(r.s, r.e).filter(function(x) { return ['fixed','var','sub'].indexOf(x.type)>=0; });
-    var total = dayRecs.reduce(function(a,x) { return a+x.amount; }, 0);
-    var html = dayRecs.length
-      ? '<div style="font-size:13px;color:#7A6355;margin-bottom:10px">共 ' + dayRecs.length + ' 筆 · 合計 <span style="color:#8B1A1A;font-weight:600">' + fmtMoney(total) + '</span></div>' +
-        dayRecs.map(function(x) {
-          var bc=x.member==='Jo'?'bj':x.member==='共同'?'bs':'bc';
-          var pn=getPN(x.payId);
-          return '<div class="log-item"><div class="log-left"><div class="log-name">' + getCN(x) + (x.note?'<span style="font-weight:400;color:#7A6355;font-size:11px"> · '+x.note+'</span>':'') + '<span class="badge ' + bc + '">' + x.member + '</span>' + (pn?'<span class="pay-badge">'+pn+'</span>':'') + '</div><div class="log-meta">' + tl(x.type) + '</div></div><div class="log-right"><span class="log-amt cr">－' + fmtMoney(x.amount) + '</span></div></div>';
-        }).join('')
-      : '<div style="font-size:14px;color:#7A6355;padding:16px 0;text-align:center">這天沒有消費記錄 ✨</div>';
-    // 隱藏其他區塊，只顯示日報
-    anHdrs.forEach(function(id,i) { document.getElementById(id).style.display = i===0?'block':'none'; });
-    document.getElementById('an-trend-card').innerHTML = '<div style="padding:4px 0">' + html + '</div>';
-    document.getElementById('an-trend-card').style.display = 'block';
-    document.getElementById('cat-breakdown').closest('.card').style.display='none';
-    document.getElementById('pay-breakdown').closest('.card').style.display='none';
-    document.getElementById('an-invest').closest('.card').style.display='none';
-    document.getElementById('yearly-summary').closest('.card').style.display='none';
-    return;
-  }
 
   // 恢復所有區塊
   anHdrs.forEach(function(id) { document.getElementById(id).style.display='block'; });
@@ -927,18 +1010,24 @@ function nav(page, btn) {
   document.getElementById('pg-'+page).classList.add('active');
   btn.classList.add('active'); curPage=page;
   if (page==='home') renderHome();
-  else if (page==='log') { refreshPayFilter(); renderAllLog(); }
+  else if (page==='log') {
+    refreshPayFilter();
+    // 預設選今天
+    if (calSelectedDate===null) calSelectedDate = dateStr(new Date());
+    renderWeekCal();
+    renderAllLog();
+  }
   else if (page==='savings') renderSavings();
   else if (page==='analysis') renderAnalysis();
   else if (page==='settings') renderSettings();
 }
 function shiftMonth(d) { viewOffset+=d; refreshPage(); }
-function goToday() { viewOffset=0; refreshPage(); }
+function goToday() { viewOffset=0; calWeekOffset=0; calSelectedDate=dateStr(new Date()); refreshPage(); }
 function refreshPage() {
   if (!window.dbReady) return;
   updateTopbar();
   if (curPage==='home') renderHome();
-  else if (curPage==='log') renderAllLog();
+  else if (curPage==='log') { renderWeekCal(); renderAllLog(); }
   else if (curPage==='savings') renderSavings();
   else if (curPage==='analysis') renderAnalysis();
 }
