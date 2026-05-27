@@ -794,11 +794,10 @@ function renderAnalysis() {
     anHdrs.forEach(function(id,i) { document.getElementById(id).style.display = i===0?'block':'none'; });
     document.getElementById('an-trend-card').innerHTML = '<div style="padding:4px 0">' + html + '</div>';
     document.getElementById('an-trend-card').style.display = 'block';
-    ['cat-breakdown','pay-breakdown','an-invest','yearly-summary'].forEach(function(id) {
-      var el=document.getElementById(id);
-      if (el && el.parentElement) el.parentElement.style.display='none';
-      if (el) el.style.display='none';
-    });
+    document.getElementById('cat-breakdown').closest('.card').style.display='none';
+    document.getElementById('pay-breakdown').closest('.card').style.display='none';
+    document.getElementById('an-invest').closest('.card').style.display='none';
+    document.getElementById('yearly-summary').closest('.card').style.display='none';
     return;
   }
 
@@ -806,10 +805,10 @@ function renderAnalysis() {
   anHdrs.forEach(function(id) { document.getElementById(id).style.display='block'; });
   document.getElementById('an-trend-card').style.display='block';
   document.getElementById('an-trend-card').innerHTML = '<div style="height:120px"><div class="month-bar-wrap" id="trend-chart"></div></div><div class="legend" id="trend-legend"></div>';
-  ['cat-breakdown','pay-breakdown','an-invest','yearly-summary'].forEach(function(id) {
-    var el=document.getElementById(id);
-    if (el) { el.style.display='block'; if (el.parentElement) el.parentElement.style.display='block'; }
-  });
+  document.getElementById('cat-breakdown').closest('.card').style.display='block';
+  document.getElementById('pay-breakdown').closest('.card').style.display='block';
+  document.getElementById('an-invest').closest('.card').style.display='block';
+  document.getElementById('yearly-summary').closest('.card').style.display='block';
 
   document.getElementById('an-range-label').textContent = '查看區間：' + r.s.getFullYear() + '年 ' + fmtDS(r.s) + ' — ' + fmtDS(r.e);
   var recs = getRIR(r.s, r.e);
