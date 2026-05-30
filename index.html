@@ -356,7 +356,8 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
   <div class="frow"><label>存入金額（元）</label><input type="number" inputmode="decimal" id="dep-amount" placeholder="0"></div>
   <div class="frow"><label>付款方式</label><select id="dep-pay"></select></div>
   <div class="frow"><label>成員</label><select id="dep-member"><option value="Cheryl">Cheryl</option><option value="Jo">Jo</option><option value="共同">共同</option></select></div>
-  <div class="frow"><label>備註（選填）</label><input type="text" id="dep-note"></div>
+  <div class="frow"><label>備註（選填）</label><input type="text" id="dep-note" placeholder="例：初始水位"></div>
+  <div style="padding:0 0 12px;font-size:12px;color:#7A6355">💡 填入 app 啟用前已累積的金額，請在備註輸入「初始水位」</div>
   <div class="factions"><button class="btn-s" onclick="closeDep()">取消</button><button class="btn-p" onclick="saveDep()">存入 🎊</button></div>
 </div>
 </div>
@@ -546,7 +547,7 @@ function calcSum(off) {
   var exp = recs.filter(function(r) { return ['fixed','var','sub'].indexOf(r.type)>=0; }).reduce(function(a,r) { return a+r.amount; }, 0);
   var sav = recs.filter(function(r) { return r.type==='savings'; }).reduce(function(a,r) { return a+r.amount; }, 0);
   var totalIncome = inc.total + extra;
-  return {totalIncome:totalIncome, confirmed:inc.confirmed, extra:extra, expense:exp, saved:sav, left:totalIncome-exp-sav};
+  return {totalIncome:totalIncome, confirmed:inc.confirmed, extra:extra, expense:exp, saved:sav, left:totalIncome-exp};
 }
 function getPrice(sym) { return window.S.prices[sym] ? window.S.prices[sym].price : null; }
 
@@ -815,9 +816,10 @@ function renderSavings() {
     var pct = c.monthlyTarget>0 ? Math.min(100, Math.round((md/c.monthlyTarget)*100)) : null;
     var bar = pct!==null ? '<div class="prog-bar" style="margin-bottom:10px"><div class="prog-fill fok" style="width:' + pct + '%"></div></div>' : '';
     var hist = window.S.records.filter(function(r) { return r.type==='savings' && r.catId===c.id; }).sort(function(a,b) { return new Date(b.date)-new Date(a.date); });
-    var hh = hist.length ? hist.slice(0,8).map(function(r) {
+    var hh = hist.length ? hist.slice(0,20).map(function(r) {
       var bc = r.member==='Jo'?'bj':r.member==='共同'?'bs':'bc';
-      return '<div class="sav-hist-item"><span>' + r.date + '<span class="badge ' + bc + '">' + r.member + '</span>' + (getPN(r.payId)?'<span class="pay-badge">'+getPN(r.payId)+'</span>':'') + '</span><span style="color:#7A9BB5;font-weight:600">+' + fmtMoney(r.amount) + '</span></div>';
+      var isInit = r.note && r.note.indexOf('初始水位')>=0;
+      return '<div class="sav-hist-item"><span>' + r.date + (isInit?'<span style="font-size:10px;color:#7A6355;margin-left:4px">初始</span>':'') + '<span class="badge ' + bc + '">' + r.member + '</span>' + (getPN(r.payId)?'<span class="pay-badge">'+getPN(r.payId)+'</span>':'') + (r.note&&!isInit?'<span style="font-size:11px;color:#7A6355"> · '+r.note+'</span>':'') + '</span><span style="display:flex;align-items:center;gap:6px"><span style="color:#7A9BB5;font-weight:600">+' + fmtMoney(r.amount) + '</span><button onclick="delSavRec(\'' + r.id + '\',\'' + c.id + '\',' + r.amount + ')" style="background:none;border:none;color:#8B1A1A;font-size:15px;cursor:pointer;padding:0 2px;line-height:1">×</button></span></div>';
     }).join('') : '<div style="font-size:12px;color:#7A6355;padding:4px 0">尚無記錄</div>';
     return '<div class="sav-card"><div class="sav-top"><div class="sav-name">' + c.name + '</div><div class="sav-tgt">' + (c.monthlyTarget>0?'月目標 '+fmtMoney(c.monthlyTarget):'彈性存入') + '</div></div>' + bar + '<div class="sav-total">' + fmtMoney(c.total) + '</div><div class="sav-monthly">本月已存 ' + fmtMoney(md) + (pct!==null?' · '+pct+'%':'') + '</div><button class="dep-btn" onclick="openDep(\'' + c.id + '\',\'' + c.name + '\')">+ 存入</button><button class="sav-hist-btn" onclick="togHist(\'hist-' + c.id + '\',this)">▸ 存款記錄</button><div class="sav-hist" id="hist-' + c.id + '">' + hh + '</div></div>';
   }).join('');
@@ -1157,6 +1159,14 @@ function openDep(id, name) {
   refreshPaySelects();
   document.getElementById('dep-modal').classList.add('open');
 }
+function delSavRec(id, catId, amount) {
+  if (!confirm('確定要刪除這筆存款記錄嗎？\n基金水位也會同步扣除。')) return;
+  window.S.records = window.S.records.filter(function(r) { return r.id!==id; });
+  var sav = window.S.savingsCats.find(function(c) { return c.id===catId; });
+  if (sav) sav.total = Math.max(0, (sav.total||0) - amount);
+  window.save(); renderSavings();
+}
+
 function closeDep() { document.getElementById('dep-modal').classList.remove('open'); }
 function saveDep() {
   var amount=parseFloat(document.getElementById('dep-amount').value)||0;
