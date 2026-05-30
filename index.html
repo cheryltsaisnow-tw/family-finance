@@ -542,9 +542,11 @@ function getTI(off) {
 function calcSum(off) {
   var recs = getPR(off!=null ? off : viewOffset);
   var inc = getTI(off!=null ? off : viewOffset);
+  var extra = recs.filter(function(r) { return r.type==='income-extra'; }).reduce(function(a,r) { return a+r.amount; }, 0);
   var exp = recs.filter(function(r) { return ['fixed','var','sub'].indexOf(r.type)>=0; }).reduce(function(a,r) { return a+r.amount; }, 0);
   var sav = recs.filter(function(r) { return r.type==='savings'; }).reduce(function(a,r) { return a+r.amount; }, 0);
-  return {totalIncome:inc.total, confirmed:inc.confirmed, expense:exp, saved:sav, left:inc.total-exp-sav};
+  var totalIncome = inc.total + extra;
+  return {totalIncome:totalIncome, confirmed:inc.confirmed, extra:extra, expense:exp, saved:sav, left:totalIncome-exp-sav};
 }
 function getPrice(sym) { return window.S.prices[sym] ? window.S.prices[sym].price : null; }
 
@@ -563,7 +565,9 @@ function renderHome() {
   updateTopbar();
   var sum = calcSum();
   document.getElementById('m-income').textContent = fmtMoney(sum.totalIncome);
-  document.getElementById('m-income-sub').textContent = sum.confirmed ? '實際確認收入' : '預估（底薪）';
+  document.getElementById('m-income-sub').textContent = sum.confirmed
+    ? (sum.extra > 0 ? '薪資＋額外收入 ' + fmtMoney(sum.extra) : '實際確認收入')
+    : (sum.extra > 0 ? '預估底薪＋額外收入 ' + fmtMoney(sum.extra) : '預估（底薪）');
   document.getElementById('income-status-tag').innerHTML = sum.confirmed ? '<span class="act-tag">已確認</span>' : '<span class="est-tag">預估</span>';
   document.getElementById('m-expense').textContent = fmtMoney(sum.expense);
   document.getElementById('m-saved').textContent = fmtMoney(sum.saved);
@@ -581,8 +585,13 @@ function renderIncomeDetail() {
   var key = getPK();
   var mi = window.S.monthlyIncome[key];
   var el = document.getElementById('income-detail-rows');
+  // 額外收入（不管有沒有確認發薪，都要算）
+  var extraRecs = getPR().filter(function(r) { return r.type==='income-extra'; });
+  var extraTotal = extraRecs.reduce(function(a,r) { return a+r.amount; }, 0);
+
   if (!mi || !mi.confirmed) {
-    el.innerHTML = '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px"><span style="color:#7A6355">尚未確認本月收入</span><button class="edit-btn" style="padding:0;font-size:13px" onclick="openPayday()">立即確認 →</button></div><div style="font-size:12px;color:#7A6355">目前使用預設底薪估算：' + fmtMoney(window.S.members.reduce(function(a,m) { return a+m.baseIncome; }, 0)) + '</div>';
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:14px"><span style="color:#7A6355">尚未確認本月收入</span><button class="edit-btn" style="padding:0;font-size:13px" onclick="openPayday()">立即確認 →</button></div><div style="font-size:12px;color:#7A6355">目前使用預設底薪估算：' + fmtMoney(window.S.members.reduce(function(a,m) { return a+m.baseIncome; }, 0)) + '</div>'
+      + (extraTotal > 0 ? '<div class="income-member-row"><div><div class="income-member-name" style="color:#2B4532">額外收入</div><div class="income-items">' + extraRecs.map(function(r){ return (r.note||getCN(r)); }).join('、') + '</div></div><div class="income-total">+' + fmtMoney(extraTotal) + '</div></div>' : '');
     return;
   }
   el.innerHTML = window.S.members.map(function(m) {
@@ -593,7 +602,8 @@ function renderIncomeDetail() {
     if (d.side) lines.push('副業 +' + fmtMoney(d.side));
     var total = getMT(key, pre) || 0;
     return '<div class="income-member-row"><div><div class="income-member-name">' + m.name + '</div><div class="income-items">' + (lines.join(' · ')||'—') + '</div></div><div class="income-total">' + fmtMoney(total) + '</div></div>';
-  }).join('');
+  }).join('')
+  + (extraTotal > 0 ? '<div class="income-member-row"><div><div class="income-member-name" style="color:#2B4532">額外收入</div><div class="income-items">' + extraRecs.map(function(r){ return (r.note||getCN(r)); }).join('、') + '</div></div><div class="income-total" style="color:#2B4532">+' + fmtMoney(extraTotal) + '</div></div>' : '');
 }
 
 function renderProg(elId, cats, type) {
