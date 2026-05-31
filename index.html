@@ -362,7 +362,19 @@ canvas#fw{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 </div>
 </div>
 
-<div class="mbg" id="payday-modal">
+<div class="mbg" id="wdr-modal">
+<div class="modal">
+  <h3 id="wdr-title">提領基金</h3>
+  <div style="font-size:12px;color:#7A6355;margin-bottom:14px;padding:8px 10px;background:rgba(139,26,26,0.06);border-radius:8px">提領後將自動產生一筆「浮動支出」記帳，反映在本月支出中。</div>
+  <div class="frow"><label>提領金額（元）</label><input type="number" inputmode="decimal" id="wdr-amount" placeholder="0"></div>
+  <div class="frow"><label>支出類別</label><select id="wdr-cat"></select></div>
+  <div class="frow"><label>付款方式</label><select id="wdr-pay"></select></div>
+  <div class="frow"><label>成員</label><select id="wdr-member"><option value="Cheryl">Cheryl</option><option value="Jo">Jo</option><option value="共同">共同</option></select></div>
+  <div class="frow"><label>備註（選填）</label><input type="text" id="wdr-note" placeholder="例：試管療程第一次費用"></div>
+  <div class="frow"><label>日期</label><input type="date" id="wdr-date"></div>
+  <div class="factions"><button class="btn-s" onclick="closeWdr()">取消</button><button class="btn-p" onclick="saveWdr()" style="background:#8B1A1A">提領 💸</button></div>
+</div>
+</div>
 <div class="pday-modal">
   <h3 style="font-size:19px;margin-bottom:4px">💰 發薪了！</h3>
   <div style="font-size:13px;color:#7A6355;margin-bottom:16px" id="pday-period-label">確認本月實際收入</div>
@@ -631,7 +643,7 @@ function renderProg(elId, cats, type) {
 
 function getCN(r) { return ([].concat(window.S.fixedCats, window.S.varCats, window.S.subCats, window.S.savingsCats).find(function(c) { return c.id===r.catId; }) || {name:'未分類'}).name; }
 function getPN(pid) { if (!pid) return ''; return (window.S.payMethods.find(function(p) { return p.id===pid; }) || {name:pid}).name; }
-var tl = function(t) { return {fixed:'固定支出',var:'浮動支出',sub:'訂閱費','income-extra':'額外收入',savings:'基金存款'}[t] || t; };
+var tl = function(t) { return {fixed:'固定支出',var:'浮動支出',sub:'訂閱費','income-extra':'額外收入',savings:'基金存款','savings-wdr':'基金提領'}[t] || t; };
 
 function logHTML(r, showAct) {
   var bc = r.member==='Jo' ? 'bj' : r.member==='共同' ? 'bs' : 'bc';
@@ -815,13 +827,36 @@ function renderSavings() {
     var md = pr.filter(function(r) { return r.type==='savings' && r.catId===c.id; }).reduce(function(a,r) { return a+r.amount; }, 0);
     var pct = c.monthlyTarget>0 ? Math.min(100, Math.round((md/c.monthlyTarget)*100)) : null;
     var bar = pct!==null ? '<div class="prog-bar" style="margin-bottom:10px"><div class="prog-fill fok" style="width:' + pct + '%"></div></div>' : '';
-    var hist = window.S.records.filter(function(r) { return r.type==='savings' && r.catId===c.id; }).sort(function(a,b) { return new Date(b.date)-new Date(a.date); });
-    var hh = hist.length ? hist.slice(0,20).map(function(r) {
-      var bc = r.member==='Jo'?'bj':r.member==='共同'?'bs':'bc';
+    // 歷史：存入(savings) + 提領(savings-wdr) 合併，依日期排序
+    var hist = window.S.records.filter(function(r) {
+      return (r.type==='savings' || r.type==='savings-wdr') && r.catId===c.id;
+    }).sort(function(a,b) { return new Date(b.date)-new Date(a.date); });
+    var hh = hist.length ? hist.slice(0,30).map(function(r) {
+      var isWdr = r.type==='savings-wdr';
       var isInit = r.note && r.note.indexOf('初始水位')>=0;
-      return '<div class="sav-hist-item"><span>' + r.date + (isInit?'<span style="font-size:10px;color:#7A6355;margin-left:4px">初始</span>':'') + '<span class="badge ' + bc + '">' + r.member + '</span>' + (getPN(r.payId)?'<span class="pay-badge">'+getPN(r.payId)+'</span>':'') + (r.note&&!isInit?'<span style="font-size:11px;color:#7A6355"> · '+r.note+'</span>':'') + '</span><span style="display:flex;align-items:center;gap:6px"><span style="color:#7A9BB5;font-weight:600">+' + fmtMoney(r.amount) + '</span><button onclick="delSavRec(\'' + r.id + '\',\'' + c.id + '\',' + r.amount + ')" style="background:none;border:none;color:#8B1A1A;font-size:15px;cursor:pointer;padding:0 2px;line-height:1">×</button></span></div>';
+      var bc = r.member==='Jo'?'bj':r.member==='共同'?'bs':'bc';
+      var amtStyle = isWdr ? 'color:#8B1A1A;font-weight:600' : 'color:#7A9BB5;font-weight:600';
+      var amtText = (isWdr ? '−' : '+') + fmtMoney(r.amount);
+      var noteText = r.note && !isInit ? '<span style="font-size:11px;color:#7A6355"> · '+r.note+'</span>' : '';
+      var initTag = isInit ? '<span style="font-size:10px;color:#7A6355;margin-left:4px">初始</span>' : '';
+      var wdrTag = isWdr ? '<span style="font-size:10px;color:#8B1A1A;margin-left:4px">提領</span>' : '';
+      return '<div class="sav-hist-item"><span>' + r.date + initTag + wdrTag + '<span class="badge ' + bc + '">' + r.member + '</span>' + (getPN(r.payId)?'<span class="pay-badge">'+getPN(r.payId)+'</span>':'') + noteText + '</span>'
+           + '<span style="display:flex;align-items:center;gap:6px"><span style="'+amtStyle+'">' + amtText + '</span>'
+           + '<button onclick="delSavRec(\'' + r.id + '\',\'' + c.id + '\',' + r.amount + ',\'' + r.type + '\')" style="background:none;border:none;color:#8B1A1A;font-size:15px;cursor:pointer;padding:0 2px;line-height:1">×</button>'
+           + '</span></div>';
     }).join('') : '<div style="font-size:12px;color:#7A6355;padding:4px 0">尚無記錄</div>';
-    return '<div class="sav-card"><div class="sav-top"><div class="sav-name">' + c.name + '</div><div class="sav-tgt">' + (c.monthlyTarget>0?'月目標 '+fmtMoney(c.monthlyTarget):'彈性存入') + '</div></div>' + bar + '<div class="sav-total">' + fmtMoney(c.total) + '</div><div class="sav-monthly">本月已存 ' + fmtMoney(md) + (pct!==null?' · '+pct+'%':'') + '</div><button class="dep-btn" onclick="openDep(\'' + c.id + '\',\'' + c.name + '\')">+ 存入</button><button class="sav-hist-btn" onclick="togHist(\'hist-' + c.id + '\',this)">▸ 存款記錄</button><div class="sav-hist" id="hist-' + c.id + '">' + hh + '</div></div>';
+    return '<div class="sav-card">'
+      + '<div class="sav-top"><div class="sav-name">' + c.name + '</div><div class="sav-tgt">' + (c.monthlyTarget>0?'月目標 '+fmtMoney(c.monthlyTarget):'彈性存入') + '</div></div>'
+      + bar
+      + '<div class="sav-total">' + fmtMoney(c.total) + '</div>'
+      + '<div class="sav-monthly">本月已存 ' + fmtMoney(md) + (pct!==null?' · '+pct+'%':'') + '</div>'
+      + '<div style="display:flex;gap:8px;margin-top:10px">'
+      + '<button class="dep-btn" style="flex:1" onclick="openDep(\'' + c.id + '\',\'' + c.name + '\')">+ 存入</button>'
+      + '<button class="dep-btn" style="flex:1;background:#FDF9F3;color:#8B1A1A;border-color:#8B1A1A" onclick="openWdr(\'' + c.id + '\',\'' + c.name + '\')">− 提領</button>'
+      + '</div>'
+      + '<button class="sav-hist-btn" onclick="togHist(\'hist-' + c.id + '\',this)">▸ 交易記錄</button>'
+      + '<div class="sav-hist" id="hist-' + c.id + '">' + hh + '</div>'
+      + '</div>';
   }).join('');
 }
 
@@ -1159,11 +1194,70 @@ function openDep(id, name) {
   refreshPaySelects();
   document.getElementById('dep-modal').classList.add('open');
 }
-function delSavRec(id, catId, amount) {
-  if (!confirm('確定要刪除這筆存款記錄嗎？\n基金水位也會同步扣除。')) return;
+var wdrSavId = '', wdrSavName = '';
+function openWdr(catId, catName) {
+  wdrSavId = catId; wdrSavName = catName;
+  document.getElementById('wdr-title').textContent = '提領「' + catName + '」';
+  document.getElementById('wdr-amount').value = '';
+  document.getElementById('wdr-note').value = '';
+  document.getElementById('wdr-date').value = new Date().toISOString().slice(0,10);
+  // 填入浮動支出類別
+  var catOpts = window.S.varCats.map(function(c) {
+    return '<option value="'+c.id+'">'+c.name+'</option>';
+  }).join('');
+  document.getElementById('wdr-cat').innerHTML = catOpts;
+  // 填入付款方式
+  document.getElementById('wdr-pay').innerHTML = '<option value="">— 不指定 —</option>'
+    + window.S.payMethods.map(function(p) { return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
+  document.getElementById('wdr-modal').classList.add('open');
+}
+function closeWdr() { document.getElementById('wdr-modal').classList.remove('open'); }
+function saveWdr() {
+  var amount = parseFloat(document.getElementById('wdr-amount').value)||0;
+  if (!amount) return;
+  var member = document.getElementById('wdr-member').value;
+  var note = document.getElementById('wdr-note').value.trim();
+  var payId = document.getElementById('wdr-pay').value||'';
+  var catId = document.getElementById('wdr-cat').value;
+  var date = document.getElementById('wdr-date').value || new Date().toISOString().slice(0,10);
+  var noteText = note || ('從「'+wdrSavName+'」提領');
+
+  // 1. 基金水位扣減 + 記錄提領
+  var sav = window.S.savingsCats.find(function(c) { return c.id===wdrSavId; });
+  if (sav) sav.total = Math.max(0, (sav.total||0) - amount);
+  var wdrId = Date.now().toString();
+  window.S.records.push({id:wdrId, type:'savings-wdr', catId:wdrSavId, amount:amount, note:noteText, member:member, date:date, payId:payId});
+
+  // 2. 同步產生一筆浮動支出
+  var expId = (Date.now()+1).toString();
+  window.S.records.push({id:expId, type:'var', catId:catId, amount:amount, note:noteText, member:member, date:date, payId:payId});
+
+  window.save(); closeWdr(); renderSavings();
+  // 顯示提示
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(60,36,21,0.5);z-index:300;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = '<div style="background:#FDF9F3;border-radius:16px;padding:28px 24px;text-align:center;max-width:300px;margin:0 16px">'
+    + '<div style="font-size:32px;margin-bottom:8px">💸</div>'
+    + '<div style="font-size:17px;font-weight:700;color:#3C2415;margin-bottom:6px">提領完成</div>'
+    + '<div style="font-size:13px;color:#7A6355;margin-bottom:4px">已從「'+wdrSavName+'」提領 '+fmtMoney(amount)+'</div>'
+    + '<div style="font-size:12px;color:#7A6355;margin-bottom:18px">並同步新增一筆浮動支出記帳</div>'
+    + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:#B5622A;color:#FDF9F3;border:none;border-radius:8px;padding:10px 28px;font-size:15px;cursor:pointer">確認</button>'
+    + '</div>';
+  document.body.appendChild(modal);
+}
+
+function delSavRec(id, catId, amount, type) {
+  var isWdr = type === 'savings-wdr';
+  var msg = isWdr
+    ? '確定要刪除這筆提領記錄嗎？\n基金水位會回復，但對應的浮動支出記帳不會自動刪除，請自行至記帳頁刪除。'
+    : '確定要刪除這筆存款記錄嗎？\n基金水位也會同步扣除。';
+  if (!confirm(msg)) return;
   window.S.records = window.S.records.filter(function(r) { return r.id!==id; });
   var sav = window.S.savingsCats.find(function(c) { return c.id===catId; });
-  if (sav) sav.total = Math.max(0, (sav.total||0) - amount);
+  if (sav) {
+    if (isWdr) sav.total = (sav.total||0) + amount; // 提領刪除→水位回復
+    else sav.total = Math.max(0, (sav.total||0) - amount); // 存款刪除→水位扣減
+  }
   window.save(); renderSavings();
 }
 
